@@ -372,6 +372,33 @@ public:
     std::vector<TargetType> getData () const;
     
     /**
+     * Change the datatype of the image, casting the pixel data if present
+     * @param datatype A NIfTI datatype code
+    **/
+    void changeDatatype (const short datatype);
+    
+    /**
+     * Change the datatype of the image, casting the pixel data if present
+     * @param datatype A string specifying the new datatype
+    **/
+    void changeDatatype (const std::string &datatype);
+    
+    /**
+     * Replace the pixel data in the image with the contents of a vector
+     * @param data A data vector, whose elements will be cast to match the datatype of the image.
+     * An exception will be raised if this does not have a length matching the image
+     * @param datatype The final datatype required. By default the existing datatype of the image
+     * is used
+    **/
+    template <typename SourceType>
+    void replaceData (const std::vector<SourceType> &data, const short datatype = DT_NONE);
+    
+    /**
+     * Drop the data from the image, retaining only the metadata
+    **/
+    void dropData () { nifti_image_unload(image); }
+    
+    /**
      * Rescale the image, changing its image dimensions and pixel dimensions
      * @param scales Vector of scale factors along each dimension
      * @note No interpolation is performed on the pixel data, which is simply dropped
@@ -453,7 +480,7 @@ public:
      * @param fileName The file name to write to, with appropriate suffix (e.g. ".nii.gz")
      * @param datatype The datatype to use when writing the file
     **/
-    void toFile (const std::string fileName, const short datatype) const;
+    void toFile (const std::string fileName, const short datatype = DT_NONE) const;
     
     /**
      * Write the image to a NIfTI-1 file
@@ -492,7 +519,6 @@ public:
 
 // Include helper functions
 #include "lib/NiftiImage_internal.h"
-using namespace internal;
 
 inline void NiftiImage::copy (const nifti_image *source)
 {
@@ -734,72 +760,72 @@ inline void NiftiImage::initFromList (const Rcpp::RObject &object)
     for (Rcpp::CharacterVector::const_iterator it=_names.begin(); it!=_names.end(); it++)
         names.insert(Rcpp::as<std::string>(*it));
     
-    copyIfPresent(list, names, "sizeof_hdr", header->sizeof_hdr);
+    internal::copyIfPresent(list, names, "sizeof_hdr", header->sizeof_hdr);
     
-    copyIfPresent(list, names, "dim_info", header->dim_info);
+    internal::copyIfPresent(list, names, "dim_info", header->dim_info);
     if (names.count("dim") == 1)
     {
         std::vector<short> dim = list["dim"];
-        for (int i=0; i<std::min(dim.size(),size_t(8)); i++)
+        for (size_t i=0; i<std::min(dim.size(),size_t(8)); i++)
             header->dim[i] = dim[i];
     }
     
-    copyIfPresent(list, names, "intent_p1", header->intent_p1);
-    copyIfPresent(list, names, "intent_p2", header->intent_p2);
-    copyIfPresent(list, names, "intent_p3", header->intent_p3);
-    copyIfPresent(list, names, "intent_code", header->intent_code);
+    internal::copyIfPresent(list, names, "intent_p1", header->intent_p1);
+    internal::copyIfPresent(list, names, "intent_p2", header->intent_p2);
+    internal::copyIfPresent(list, names, "intent_p3", header->intent_p3);
+    internal::copyIfPresent(list, names, "intent_code", header->intent_code);
     
-    copyIfPresent(list, names, "datatype", header->datatype);
-    copyIfPresent(list, names, "bitpix", header->bitpix);
+    internal::copyIfPresent(list, names, "datatype", header->datatype);
+    internal::copyIfPresent(list, names, "bitpix", header->bitpix);
     
-    copyIfPresent(list, names, "slice_start", header->slice_start);
+    internal::copyIfPresent(list, names, "slice_start", header->slice_start);
     if (names.count("pixdim") == 1)
     {
         std::vector<float> pixdim = list["pixdim"];
-        for (int i=0; i<std::min(pixdim.size(),size_t(8)); i++)
+        for (size_t i=0; i<std::min(pixdim.size(),size_t(8)); i++)
             header->pixdim[i] = pixdim[i];
     }
-    copyIfPresent(list, names, "vox_offset", header->vox_offset);
-    copyIfPresent(list, names, "scl_slope", header->scl_slope);
-    copyIfPresent(list, names, "scl_inter", header->scl_inter);
-    copyIfPresent(list, names, "slice_end", header->slice_end);
-    copyIfPresent(list, names, "slice_code", header->slice_code);
-    copyIfPresent(list, names, "xyzt_units", header->xyzt_units);
-    copyIfPresent(list, names, "cal_max", header->cal_max);
-    copyIfPresent(list, names, "cal_min", header->cal_min);
-    copyIfPresent(list, names, "slice_duration", header->slice_duration);
-    copyIfPresent(list, names, "toffset", header->toffset);
+    internal::copyIfPresent(list, names, "vox_offset", header->vox_offset);
+    internal::copyIfPresent(list, names, "scl_slope", header->scl_slope);
+    internal::copyIfPresent(list, names, "scl_inter", header->scl_inter);
+    internal::copyIfPresent(list, names, "slice_end", header->slice_end);
+    internal::copyIfPresent(list, names, "slice_code", header->slice_code);
+    internal::copyIfPresent(list, names, "xyzt_units", header->xyzt_units);
+    internal::copyIfPresent(list, names, "cal_max", header->cal_max);
+    internal::copyIfPresent(list, names, "cal_min", header->cal_min);
+    internal::copyIfPresent(list, names, "slice_duration", header->slice_duration);
+    internal::copyIfPresent(list, names, "toffset", header->toffset);
     
     if (names.count("descrip") == 1)
         strcpy(header->descrip, Rcpp::as<std::string>(list["descrip"]).substr(0,79).c_str());
     if (names.count("aux_file") == 1)
         strcpy(header->aux_file, Rcpp::as<std::string>(list["aux_file"]).substr(0,23).c_str());
     
-    copyIfPresent(list, names, "qform_code", header->qform_code);
-    copyIfPresent(list, names, "sform_code", header->sform_code);
-    copyIfPresent(list, names, "quatern_b", header->quatern_b);
-    copyIfPresent(list, names, "quatern_c", header->quatern_c);
-    copyIfPresent(list, names, "quatern_d", header->quatern_d);
-    copyIfPresent(list, names, "qoffset_x", header->qoffset_x);
-    copyIfPresent(list, names, "qoffset_y", header->qoffset_y);
-    copyIfPresent(list, names, "qoffset_z", header->qoffset_z);
+    internal::copyIfPresent(list, names, "qform_code", header->qform_code);
+    internal::copyIfPresent(list, names, "sform_code", header->sform_code);
+    internal::copyIfPresent(list, names, "quatern_b", header->quatern_b);
+    internal::copyIfPresent(list, names, "quatern_c", header->quatern_c);
+    internal::copyIfPresent(list, names, "quatern_d", header->quatern_d);
+    internal::copyIfPresent(list, names, "qoffset_x", header->qoffset_x);
+    internal::copyIfPresent(list, names, "qoffset_y", header->qoffset_y);
+    internal::copyIfPresent(list, names, "qoffset_z", header->qoffset_z);
     
     if (names.count("srow_x") == 1)
     {
         std::vector<float> srow_x = list["srow_x"];
-        for (int i=0; i<std::min(srow_x.size(),size_t(4)); i++)
+        for (size_t i=0; i<std::min(srow_x.size(),size_t(4)); i++)
             header->srow_x[i] = srow_x[i];
     }
     if (names.count("srow_y") == 1)
     {
         std::vector<float> srow_y = list["srow_y"];
-        for (int i=0; i<std::min(srow_y.size(),size_t(4)); i++)
+        for (size_t i=0; i<std::min(srow_y.size(),size_t(4)); i++)
             header->srow_y[i] = srow_y[i];
     }
     if (names.count("srow_z") == 1)
     {
         std::vector<float> srow_z = list["srow_z"];
-        for (int i=0; i<std::min(srow_z.size(),size_t(4)); i++)
+        for (size_t i=0; i<std::min(srow_z.size(),size_t(4)); i++)
             header->srow_z[i] = srow_z[i];
     }
     
@@ -863,7 +889,7 @@ inline NiftiImage::NiftiImage (const SEXP object, const bool readData)
         Rcpp::XPtr<NiftiImage> imagePtr(SEXP(imageObject.attr(".nifti_image_ptr")));
         if (imagePtr.get() != NULL)
         {
-            this->image = *imagePtr;
+            this->image = imagePtr->image;
             this->persistent = true;
             resolved = true;
             
@@ -939,7 +965,7 @@ inline void NiftiImage::updatePixdim (const std::vector<float> &pixdim)
         
         if (image->qform_code > 0)
         {
-            mat33 prod = nifti_mat33_mul(scaleMatrix, topLeftCorner(image->qto_xyz));
+            mat33 prod = nifti_mat33_mul(scaleMatrix, internal::topLeftCorner(image->qto_xyz));
             for (int i=0; i<3; i++)
             {
                 for (int j=0; j<3; j++)
@@ -951,7 +977,7 @@ inline void NiftiImage::updatePixdim (const std::vector<float> &pixdim)
         
         if (image->sform_code > 0)
         {
-            mat33 prod = nifti_mat33_mul(scaleMatrix, topLeftCorner(image->sto_xyz));
+            mat33 prod = nifti_mat33_mul(scaleMatrix, internal::topLeftCorner(image->sto_xyz));
             for (int i=0; i<3; i++)
             {
                 for (int j=0; j<3; j++)
@@ -964,7 +990,7 @@ inline void NiftiImage::updatePixdim (const std::vector<float> &pixdim)
 
 inline void NiftiImage::setPixunits (const std::vector<std::string> &pixunits)
 {
-    for (int i=0; i<pixunits.size(); i++)
+    for (size_t i=0; i<pixunits.size(); i++)
     {
         if (pixunits[i] == "m")
             image->xyz_units = NIFTI_UNITS_METER;
@@ -1088,7 +1114,7 @@ inline mat44 NiftiImage::xform (const bool preferQuaternion) const
 }
 
 template <typename TargetType>
-std::vector<TargetType> NiftiImage::Block::getData () const
+inline std::vector<TargetType> NiftiImage::Block::getData () const
 {
     if (image.isNull())
         return std::vector<TargetType>();
@@ -1096,111 +1122,116 @@ std::vector<TargetType> NiftiImage::Block::getData () const
     size_t blockSize = 1;
     for (int i=1; i<dimension; i++)
         blockSize *= image->dim[i];
+
     std::vector<TargetType> data(blockSize);
-    
-    switch (image->datatype)
-    {
-        case DT_UINT8:
-        convertVector(static_cast<uint8_t *>(image->data) + blockSize*index, blockSize, data);
-        break;
-
-        case DT_INT16:
-        convertVector(static_cast<int16_t *>(image->data) + blockSize*index, blockSize, data);
-        break;
-
-        case DT_INT32:
-        convertVector(static_cast<int32_t *>(image->data) + blockSize*index, blockSize, data);
-        break;
-
-        case DT_FLOAT32:
-        convertVector(static_cast<float *>(image->data) + blockSize*index, blockSize, data);
-        break;
-
-        case DT_FLOAT64:
-        convertVector(static_cast<double *>(image->data) + blockSize*index, blockSize, data);
-        break;
-
-        case DT_INT8:
-        convertVector(static_cast<int8_t *>(image->data) + blockSize*index, blockSize, data);
-        break;
-
-        case DT_UINT16:
-        convertVector(static_cast<uint16_t *>(image->data) + blockSize*index, blockSize, data);
-        break;
-
-        case DT_UINT32:
-        convertVector(static_cast<uint32_t *>(image->data) + blockSize*index, blockSize, data);
-        break;
-
-        case DT_INT64:
-        convertVector(static_cast<int64_t *>(image->data) + blockSize*index, blockSize, data);
-        break;
-
-        case DT_UINT64:
-        convertVector(static_cast<uint64_t *>(image->data) + blockSize*index, blockSize, data);
-        break;
-
-        default:
-        throw std::runtime_error("Unsupported data type (" + std::string(nifti_datatype_string(image->datatype)) + ")");
-    }
-    
+    internal::convertData<TargetType>(image->data, image->datatype, blockSize, data.begin(), blockSize*index);
     return data;
 }
 
 template <typename TargetType>
-std::vector<TargetType> NiftiImage::getData () const
+inline std::vector<TargetType> NiftiImage::getData () const
 {
     if (this->isNull())
         return std::vector<TargetType>();
     
     std::vector<TargetType> data(image->nvox);
-    switch (image->datatype)
+    internal::convertData<TargetType>(image->data, image->datatype, image->nvox, data.begin());
+    return data;
+}
+
+inline void NiftiImage::changeDatatype (const short datatype)
+{
+    if (this->isNull() || image->datatype == datatype)
+        return;
+    
+    if (image->data != NULL)
     {
-        case DT_UINT8:
-        convertVector(static_cast<uint8_t *>(image->data), image->nvox, data);
-        break;
-
-        case DT_INT16:
-        convertVector(static_cast<int16_t *>(image->data), image->nvox, data);
-        break;
-
-        case DT_INT32:
-        convertVector(static_cast<int32_t *>(image->data), image->nvox, data);
-        break;
-
-        case DT_FLOAT32:
-        convertVector(static_cast<float *>(image->data), image->nvox, data);
-        break;
-
-        case DT_FLOAT64:
-        convertVector(static_cast<double *>(image->data), image->nvox, data);
-        break;
-
-        case DT_INT8:
-        convertVector(static_cast<int8_t *>(image->data), image->nvox, data);
-        break;
-
-        case DT_UINT16:
-        convertVector(static_cast<uint16_t *>(image->data), image->nvox, data);
-        break;
-
-        case DT_UINT32:
-        convertVector(static_cast<uint32_t *>(image->data), image->nvox, data);
-        break;
-
-        case DT_INT64:
-        convertVector(static_cast<int64_t *>(image->data), image->nvox, data);
-        break;
-
-        case DT_UINT64:
-        convertVector(static_cast<uint64_t *>(image->data), image->nvox, data);
-        break;
-
-        default:
-        throw std::runtime_error("Unsupported data type (" + std::string(nifti_datatype_string(image->datatype)) + ")");
+        int bytesPerPixel;
+        nifti_datatype_sizes(datatype, &bytesPerPixel, NULL);
+        void *data = calloc(image->nvox, bytesPerPixel);
+    
+        switch (datatype)
+        {
+            case DT_UINT8:
+            internal::convertData<uint8_t>(image->data, image->datatype, image->nvox, static_cast<uint8_t *>(data));
+            break;
+        
+            case DT_INT16:
+            internal::convertData<int16_t>(image->data, image->datatype, image->nvox, static_cast<int16_t *>(data));
+            break;
+        
+            case DT_INT32:
+            internal::convertData<int32_t>(image->data, image->datatype, image->nvox, static_cast<int32_t *>(data));
+            break;
+        
+            case DT_FLOAT32:
+            internal::convertData<float>(image->data, image->datatype, image->nvox, static_cast<float *>(data));
+            break;
+        
+            case DT_FLOAT64:
+            internal::convertData<double>(image->data, image->datatype, image->nvox, static_cast<double *>(data));
+            break;
+        
+            case DT_INT8:
+            internal::convertData<int8_t>(image->data, image->datatype, image->nvox, static_cast<int8_t *>(data));
+            break;
+        
+            case DT_UINT16:
+            internal::convertData<uint16_t>(image->data, image->datatype, image->nvox, static_cast<uint16_t *>(data));
+            break;
+        
+            case DT_UINT32:
+            internal::convertData<uint32_t>(image->data, image->datatype, image->nvox, static_cast<uint32_t *>(data));
+            break;
+        
+            case DT_INT64:
+            internal::convertData<int64_t>(image->data, image->datatype, image->nvox, static_cast<int64_t *>(data));
+            break;
+        
+            case DT_UINT64:
+            internal::convertData<uint64_t>(image->data, image->datatype, image->nvox, static_cast<uint64_t *>(data));
+            break;
+        
+            default:
+            throw std::runtime_error("Unsupported data type (" + std::string(nifti_datatype_string(datatype)) + ")");
+        }
+    
+        nifti_image_unload(image);
+        image->data = data;
     }
     
-    return data;
+    image->datatype = datatype;
+    nifti_datatype_sizes(datatype, &image->nbyper, &image->swapsize);
+}
+
+inline void NiftiImage::changeDatatype (const std::string &datatype)
+{
+    changeDatatype(internal::stringToDatatype(datatype));
+}
+
+template <typename SourceType>
+inline void NiftiImage::replaceData (const std::vector<SourceType> &data, const short datatype)
+{
+    if (this->isNull())
+        return;
+    else if (data.size() != image->nvox)
+        throw std::runtime_error("New data length does not match the number of voxels in the image");
+    
+    if (datatype != DT_NONE)
+    {
+        nifti_image_unload(image);
+        image->datatype = datatype;
+        nifti_datatype_sizes(datatype, &image->nbyper, &image->swapsize);
+    }
+    
+    if (image->data == NULL)
+        image->data = calloc(image->nvox, image->nbyper);
+    internal::replaceData<SourceType>(data.begin(), data.end(), image->data, image->datatype);
+    
+    image->scl_slope = 0.0;
+    image->scl_inter = 0.0;
+    image->cal_min = static_cast<float>(*std::min_element(data.begin(), data.end()));
+    image->cal_max = static_cast<float>(*std::max_element(data.begin(), data.end()));
 }
 
 inline void NiftiImage::toFile (const std::string fileName, const short datatype) const
@@ -1208,55 +1239,10 @@ inline void NiftiImage::toFile (const std::string fileName, const short datatype
     // Copy the source image only if the datatype will be changed
     NiftiImage imageToWrite(image, datatype != DT_NONE);
     
-    switch (datatype)
-    {
-        case DT_NONE:
+    if (datatype == DT_NONE)
         imageToWrite.setPersistence(true);
-        break;
-        
-        case DT_UINT8:
-        changeDatatype<uint8_t>(imageToWrite, datatype);
-        break;
-
-        case DT_INT16:
-        changeDatatype<int16_t>(imageToWrite, datatype);
-        break;
-
-        case DT_INT32:
-        changeDatatype<int32_t>(imageToWrite, datatype);
-        break;
-
-        case DT_FLOAT32:
-        changeDatatype<float>(imageToWrite, datatype);
-        break;
-
-        case DT_FLOAT64:
-        changeDatatype<double>(imageToWrite, datatype);
-        break;
-
-        case DT_INT8:
-        changeDatatype<int8_t>(imageToWrite, datatype);
-        break;
-
-        case DT_UINT16:
-        changeDatatype<uint16_t>(imageToWrite, datatype);
-        break;
-
-        case DT_UINT32:
-        changeDatatype<uint32_t>(imageToWrite, datatype);
-        break;
-
-        case DT_INT64:
-        changeDatatype<int64_t>(imageToWrite, datatype);
-        break;
-
-        case DT_UINT64:
-        changeDatatype<uint64_t>(imageToWrite, datatype);
-        break;
-
-        default:
-        throw std::runtime_error("Unsupported data type (" + std::string(nifti_datatype_string(datatype)) + ")");
-    }
+    else
+        imageToWrite.changeDatatype(datatype);
     
     const int status = nifti_set_filenames(imageToWrite, fileName.c_str(), false, true);
     if (status != 0)
@@ -1266,38 +1252,7 @@ inline void NiftiImage::toFile (const std::string fileName, const short datatype
 
 inline void NiftiImage::toFile (const std::string fileName, const std::string &datatype) const
 {
-    static std::map<std::string,short> datatypeCodes;
-    if (datatypeCodes.empty())
-    {
-        datatypeCodes["auto"] = DT_NONE;
-        datatypeCodes["none"] = DT_NONE;
-        datatypeCodes["unknown"] = DT_NONE;
-        datatypeCodes["uint8"] = DT_UINT8;
-        datatypeCodes["char"] = DT_UINT8;
-        datatypeCodes["int16"] = DT_INT16;
-        datatypeCodes["short"] = DT_INT16;
-        datatypeCodes["int32"] = DT_INT32;
-        datatypeCodes["int"] = DT_INT32;
-        datatypeCodes["float32"] = DT_FLOAT32;
-        datatypeCodes["float"] = DT_FLOAT32;
-        datatypeCodes["float64"] = DT_FLOAT64;
-        datatypeCodes["double"] = DT_FLOAT64;
-        datatypeCodes["int8"] = DT_INT8;
-        datatypeCodes["uint16"] = DT_UINT16;
-        datatypeCodes["uint32"] = DT_UINT32;
-        datatypeCodes["int64"] = DT_INT64;
-        datatypeCodes["uint64"] = DT_UINT64;
-    }
-    
-    if (datatypeCodes.count(datatype) == 0)
-    {
-        std::ostringstream message;
-        message << "Datatype \"" << datatype << "\" is not valid";
-        Rf_warning(message.str().c_str());
-        toFile(fileName, DT_NONE);
-    }
-    else
-        toFile(fileName, datatypeCodes[datatype]);
+    toFile(fileName, internal::stringToDatatype(datatype));
 }
 
 inline Rcpp::RObject NiftiImage::toArray () const
@@ -1310,51 +1265,26 @@ inline Rcpp::RObject NiftiImage::toArray () const
     switch (image->datatype)
     {
         case DT_UINT8:
-        array = imageDataToArray<uint8_t,INTSXP>(image);
-        break;
-        
         case DT_INT16:
-        array = imageDataToArray<int16_t,INTSXP>(image);
-        break;
-        
         case DT_INT32:
-        array = imageDataToArray<int32_t,INTSXP>(image);
+        case DT_INT8:
+        case DT_UINT16:
+        case DT_UINT32:
+        case DT_INT64:
+        case DT_UINT64:
+        array = internal::imageDataToArray<INTSXP>(image);
         break;
         
         case DT_FLOAT32:
-        array = imageDataToArray<float,REALSXP>(image);
-        break;
-        
         case DT_FLOAT64:
-        array = imageDataToArray<double,REALSXP>(image);
-        break;
-        
-        case DT_INT8:
-        array = imageDataToArray<int8_t,INTSXP>(image);
-        break;
-        
-        case DT_UINT16:
-        array = imageDataToArray<uint16_t,INTSXP>(image);
-        break;
-        
-        case DT_UINT32:
-        array = imageDataToArray<uint32_t,INTSXP>(image);
-        break;
-        
-        case DT_INT64:
-        array = imageDataToArray<int64_t,INTSXP>(image);
-        break;
-        
-        case DT_UINT64:
-        array = imageDataToArray<uint64_t,INTSXP>(image);
+        array = internal::imageDataToArray<REALSXP>(image);
         break;
         
         default:
         throw std::runtime_error("Unsupported data type (" + std::string(nifti_datatype_string(image->datatype)) + ")");
     }
     
-    addAttributes(array, image);
-    const Rcpp::IntegerVector dim = array.attr("dim");
+    internal::addAttributes(array, image);
     array.attr("class") = Rcpp::CharacterVector::create("niftiImage", "array");
     return array;
 }
@@ -1366,7 +1296,7 @@ inline Rcpp::RObject NiftiImage::toPointer (const std::string label) const
     else
     {
         Rcpp::RObject string = Rcpp::wrap(label);
-        addAttributes(string, image, false);
+        internal::addAttributes(string, image, false);
         string.attr("class") = Rcpp::CharacterVector::create("internalImage", "niftiImage");
         return string;
     }

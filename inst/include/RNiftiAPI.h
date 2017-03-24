@@ -15,6 +15,7 @@ static nifti_image*(*_nifti_convert_nhdr2nim)(struct nifti_1_header, const char 
 static struct nifti_1_header(*_nifti_convert_nim2nhdr)(const nifti_image *) = NULL;
 static nifti_image*(*_nifti_copy_nim_info)(const nifti_image*) = NULL;
 static int(*_nifti_copy_extensions)(nifti_image*, const nifti_image*) = NULL;
+static void(*_nifti_image_unload)(nifti_image*) = NULL;
 static void(*_nifti_image_free)(nifti_image*) = NULL;
 
 static void(*_nifti_datatype_sizes)(int, int*, int*) = NULL;
@@ -36,6 +37,7 @@ static mat33(*_nifti_mat33_polar)(mat33) = NULL;
 static mat44(*_nifti_mat44_inverse)(mat44) = NULL;
 static void(*_nifti_mat44_to_quatern)(mat44, float *, float *, float *, float *, float *, float *, float *, float *, float *, float *) = NULL;
 static mat44(*_nifti_quatern_to_mat44)(float, float, float, float, float, float, float, float, float, float) = NULL;
+static void(*_nifti_mat44_to_orientation)(mat44, int *, int *, int *) = NULL;
 
 static void(*_nifti_swap_2bytes)(size_t, void *) = NULL;
 static void(*_nifti_swap_4bytes)(size_t, void *) = NULL;
@@ -55,6 +57,7 @@ void niftilib_register_all ()
         _nifti_convert_nim2nhdr = (struct nifti_1_header(*)(const nifti_image *)) R_GetCCallable("RNifti","nii_convert_nim2nhdr");
         _nifti_copy_nim_info = (nifti_image*(*)(const nifti_image*)) R_GetCCallable("RNifti","nii_copy_nim_info");
         _nifti_copy_extensions = (int(*)(nifti_image*, const nifti_image*)) R_GetCCallable("RNifti","nii_copy_extensions");
+        _nifti_image_unload = (void(*)(nifti_image*)) R_GetCCallable("RNifti","nii_image_unload");
         _nifti_image_free = (void(*)(nifti_image*)) R_GetCCallable("RNifti","nii_image_free");
         
         _nifti_datatype_sizes = (void(*)(int, int*, int*)) R_GetCCallable("RNifti","nii_datatype_sizes");
@@ -76,6 +79,7 @@ void niftilib_register_all ()
         _nifti_mat44_inverse = (mat44(*)(mat44)) R_GetCCallable("RNifti","nii_mat44_inverse");
         _nifti_mat44_to_quatern = (void(*)(mat44, float *, float *, float *, float *, float *, float *, float *, float *, float *, float *)) R_GetCCallable("RNifti","nii_mat44_to_quatern");
         _nifti_quatern_to_mat44 = (mat44(*)(float, float, float, float, float, float, float, float, float, float)) R_GetCCallable("RNifti","nii_quatern_to_mat44");
+        _nifti_mat44_to_orientation = (void(*)(mat44, int *, int *, int *)) R_GetCCallable("RNifti","nii_mat44_to_orientation");
         
         _nifti_swap_2bytes = (void(*)(size_t, void *)) R_GetCCallable("RNifti","nii_swap_2bytes");
         _nifti_swap_4bytes = (void(*)(size_t, void *)) R_GetCCallable("RNifti","nii_swap_4bytes");
@@ -124,6 +128,13 @@ int nifti_copy_extensions (nifti_image *nim_dest, const nifti_image *nim_src)
     if (_nifti_copy_extensions == NULL)
         niftilib_register_all();
     return _nifti_copy_extensions(nim_dest, nim_src);
+}
+
+void nifti_image_unload (nifti_image *nim)
+{
+    if (_nifti_image_unload == NULL)
+        niftilib_register_all();
+    _nifti_image_unload(nim);
 }
 
 void nifti_image_free (nifti_image *nim)
@@ -250,6 +261,13 @@ mat44 nifti_quatern_to_mat44 (float qb, float qc, float qd, float qx, float qy, 
     if (_nifti_quatern_to_mat44 == NULL)
         niftilib_register_all();
     return _nifti_quatern_to_mat44(qb, qc, qd, qx, qy, qz, dx, dy, dz, qfac);
+}
+
+void nifti_mat44_to_orientation(mat44 R, int *icod, int *jcod, int *kcod)
+{
+    if (_nifti_mat44_to_orientation == NULL)
+        niftilib_register_all();
+    return _nifti_mat44_to_orientation(R, icod, jcod, kcod);
 }
 
 void nifti_swap_2bytes (size_t n, void *ar)

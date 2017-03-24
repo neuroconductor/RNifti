@@ -161,6 +161,7 @@ void R_init_RNifti (DllInfo *info)
     R_RegisterCCallable("RNifti",   "nii_convert_nim2nhdr", (DL_FUNC) &nifti_convert_nim2nhdr);
     R_RegisterCCallable("RNifti",   "nii_copy_nim_info",    (DL_FUNC) &nifti_copy_nim_info);
     R_RegisterCCallable("RNifti",   "nii_copy_extensions",  (DL_FUNC) &nifti_copy_extensions);
+    R_RegisterCCallable("RNifti",   "nii_image_unload",     (DL_FUNC) &nifti_image_unload);
     R_RegisterCCallable("RNifti",   "nii_image_free",       (DL_FUNC) &nifti_image_free);
     
     R_RegisterCCallable("RNifti",   "nii_datatype_sizes",   (DL_FUNC) &nifti_datatype_sizes);
@@ -182,6 +183,7 @@ void R_init_RNifti (DllInfo *info)
     R_RegisterCCallable("RNifti",   "nii_mat44_inverse",    (DL_FUNC) &nifti_mat44_inverse);
     R_RegisterCCallable("RNifti",   "nii_mat44_to_quatern", (DL_FUNC) &nifti_mat44_to_quatern);
     R_RegisterCCallable("RNifti",   "nii_quatern_to_mat44", (DL_FUNC) &nifti_quatern_to_mat44);
+    R_RegisterCCallable("RNifti",   "nii_mat44_to_orientation", (DL_FUNC) &nifti_mat44_to_orientation);
     
     R_RegisterCCallable("RNifti",   "nii_swap_2bytes",      (DL_FUNC) &nifti_swap_2bytes);
     R_RegisterCCallable("RNifti",   "nii_swap_4bytes",      (DL_FUNC) &nifti_swap_4bytes);
