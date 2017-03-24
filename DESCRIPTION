@@ -17,4 +17,5 @@ BugReports: https://github.com/jonclayden/RNifti/issues
 Encoding: UTF-8
 RoxygenNote: 5.0.1
 biocViews:
+Remotes: neuroconductor/oro.nifti@d630f771fbd4c5229478808d8199fe55e5c1fbf3
 
