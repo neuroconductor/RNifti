@@ -58,6 +58,8 @@ public:
         {
             if (source->datatype != image->datatype)
                 throw std::runtime_error("New data does not have the same datatype as the target block");
+            if (source->scl_slope != image->scl_slope || source->scl_inter != image->scl_inter)
+                throw std::runtime_error("New data does not have the same scale parameters as the target block");
             
             size_t blockSize = 1;
             for (int i=1; i<dimension; i++)
@@ -315,6 +317,11 @@ public:
     bool isPersistent () const { return persistent; }
     
     /**
+     * Determine whether nontrivial scale and slope parameters are set
+    **/
+    bool isDataScaled () const { return (image != NULL && image->scl_slope != 0.0 && (image->scl_slope != 1.0 || image->scl_inter != 0.0)); }
+    
+    /**
      * Return the number of dimensions in the image
     **/
     int nDims () const
@@ -522,7 +529,7 @@ public:
 
 inline void NiftiImage::copy (const nifti_image *source)
 {
-    if (image != NULL)
+    if (image != NULL && !persistent)
         nifti_image_free(image);
         
     if (source == NULL)
@@ -537,6 +544,8 @@ inline void NiftiImage::copy (const nifti_image *source)
             memcpy(image->data, source->data, dataSize);
         }
     }
+    
+    persistent = false;
 }
 
 inline void NiftiImage::copy (const NiftiImage &source)
@@ -547,7 +556,7 @@ inline void NiftiImage::copy (const NiftiImage &source)
 
 inline void NiftiImage::copy (const Block &source)
 {
-    if (image != NULL)
+    if (image != NULL && !persistent)
         nifti_image_free(image);
     
     const nifti_image *sourceStruct = source.image;
@@ -568,6 +577,8 @@ inline void NiftiImage::copy (const Block &source)
             memcpy(image->data, static_cast<char*>(source.image->data) + blockSize*source.index, blockSize);
         }
     }
+    
+    persistent = false;
 }
 
 // Convert an S4 "nifti" object, as defined in the oro.nifti package, to a "nifti_image" struct
@@ -1030,7 +1041,11 @@ inline void NiftiImage::rescale (const std::vector<float> &scales)
     nifti_update_dims_from_array(image);
     
     // Data vector is now the wrong size, so drop it
-    free(image->data);
+    if (!persistent)
+        nifti_image_unload(image);
+    
+    image->scl_slope = 0.0;
+    image->scl_inter = 0.0;
 }
 
 inline void NiftiImage::update (const SEXP array)
@@ -1067,14 +1082,26 @@ inline void NiftiImage::update (const SEXP array)
     image->datatype = NiftiImage::sexpTypeToNiftiType(object.sexp_type());
     nifti_datatype_sizes(image->datatype, &image->nbyper, NULL);
     
-    free(image->data);
+    if (!persistent)
+        nifti_image_unload(image);
     
     const size_t dataSize = nifti_get_volsize(image);
     image->data = calloc(1, dataSize);
     if (image->datatype == DT_INT32)
+    {
         memcpy(image->data, INTEGER(object), dataSize);
+        image->cal_min = static_cast<float>(*std::min_element(INTEGER(object), INTEGER(object)+image->nvox));
+        image->cal_max = static_cast<float>(*std::max_element(INTEGER(object), INTEGER(object)+image->nvox));
+    }
     else
+    {
         memcpy(image->data, REAL(object), dataSize);
+        image->cal_min = static_cast<float>(*std::min_element(REAL(object), REAL(object)+image->nvox));
+        image->cal_max = static_cast<float>(*std::max_element(REAL(object), REAL(object)+image->nvox));
+    }
+    
+    image->scl_slope = 0.0;
+    image->scl_inter = 0.0;
 }
 
 inline mat44 NiftiImage::xform (const bool preferQuaternion) const
@@ -1125,6 +1152,10 @@ inline std::vector<TargetType> NiftiImage::Block::getData () const
 
     std::vector<TargetType> data(blockSize);
     internal::convertData<TargetType>(image->data, image->datatype, blockSize, data.begin(), blockSize*index);
+    
+    if (image.isDataScaled())
+        std::transform(data.begin(), data.end(), data.begin(), internal::DataRescaler<TargetType>(image->scl_slope,image->scl_inter));
+    
     return data;
 }
 
@@ -1136,6 +1167,10 @@ inline std::vector<TargetType> NiftiImage::getData () const
     
     std::vector<TargetType> data(image->nvox);
     internal::convertData<TargetType>(image->data, image->datatype, image->nvox, data.begin());
+    
+    if (this->isDataScaled())
+        std::transform(data.begin(), data.end(), data.begin(), internal::DataRescaler<TargetType>(image->scl_slope,image->scl_inter));
+    
     return data;
 }
 
@@ -1261,27 +1296,34 @@ inline Rcpp::RObject NiftiImage::toArray () const
     
     if (this->isNull())
         return array;
-    
-    switch (image->datatype)
+    else if (this->isDataScaled())
     {
-        case DT_UINT8:
-        case DT_INT16:
-        case DT_INT32:
-        case DT_INT8:
-        case DT_UINT16:
-        case DT_UINT32:
-        case DT_INT64:
-        case DT_UINT64:
-        array = internal::imageDataToArray<INTSXP>(image);
-        break;
-        
-        case DT_FLOAT32:
-        case DT_FLOAT64:
         array = internal::imageDataToArray<REALSXP>(image);
-        break;
+        std::transform(REAL(array), REAL(array)+Rf_length(array), REAL(array), internal::DataRescaler<double>(image->scl_slope,image->scl_inter));
+    }
+    else
+    {
+        switch (image->datatype)
+        {
+            case DT_UINT8:
+            case DT_INT16:
+            case DT_INT32:
+            case DT_INT8:
+            case DT_UINT16:
+            case DT_UINT32:
+            case DT_INT64:
+            case DT_UINT64:
+            array = internal::imageDataToArray<INTSXP>(image);
+            break;
         
-        default:
-        throw std::runtime_error("Unsupported data type (" + std::string(nifti_datatype_string(image->datatype)) + ")");
+            case DT_FLOAT32:
+            case DT_FLOAT64:
+            array = internal::imageDataToArray<REALSXP>(image);
+            break;
+        
+            default:
+            throw std::runtime_error("Unsupported data type (" + std::string(nifti_datatype_string(image->datatype)) + ")");
+        }
     }
     
     internal::addAttributes(array, image);
