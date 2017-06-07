@@ -15,7 +15,7 @@ License: GPL-2
 URL: https://github.com/jonclayden/RNifti
 BugReports: https://github.com/jonclayden/RNifti/issues
 Encoding: UTF-8
-RoxygenNote: 5.0.1
+RoxygenNote: 6.0.1
+Remotes: neuroconductor/oro.nifti@ab8a1e9b60bce9e7e48984a37e7dce607f51fdb0
 biocViews:
-Remotes: neuroconductor/oro.nifti@78168094bfd54bf7a234d31d1f5548cfb7a1e736
 

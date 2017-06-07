@@ -297,13 +297,14 @@ public:
      * Marked the image as persistent, so that it can be passed back to R
      * @param persistent The new persistence state of the object
     **/
-    void setPersistence (const bool persistent)
+    NiftiImage & setPersistence (const bool persistent)
     {
         this->persistent = persistent;
 #ifndef NDEBUG
         if (persistent)
             Rprintf("Setting NiftiImage with pointer %p to be persistent\n", this->image);
 #endif
+        return *this;
     }
     
     /**
@@ -382,13 +383,13 @@ public:
      * Change the datatype of the image, casting the pixel data if present
      * @param datatype A NIfTI datatype code
     **/
-    void changeDatatype (const short datatype);
+    NiftiImage & changeDatatype (const short datatype);
     
     /**
      * Change the datatype of the image, casting the pixel data if present
      * @param datatype A string specifying the new datatype
     **/
-    void changeDatatype (const std::string &datatype);
+    NiftiImage & changeDatatype (const std::string &datatype);
     
     /**
      * Replace the pixel data in the image with the contents of a vector
@@ -398,25 +399,38 @@ public:
      * is used
     **/
     template <typename SourceType>
-    void replaceData (const std::vector<SourceType> &data, const short datatype = DT_NONE);
+    NiftiImage & replaceData (const std::vector<SourceType> &data, const short datatype = DT_NONE);
     
     /**
      * Drop the data from the image, retaining only the metadata
     **/
-    void dropData () { nifti_image_unload(image); }
+    NiftiImage & dropData ()
+    {
+        nifti_image_unload(image);
+        return *this;
+    }
     
     /**
      * Rescale the image, changing its image dimensions and pixel dimensions
      * @param scales Vector of scale factors along each dimension
      * @note No interpolation is performed on the pixel data, which is simply dropped
     **/
-    void rescale (const std::vector<float> &scales);
+    NiftiImage & rescale (const std::vector<float> &scales);
+    
+    /**
+     * Reorient the image by permuting dimensions and potentially reversing some
+     * @param i,j,k Constants such as \c NIFTI_L2R, \c NIFTI_P2A and \c NIFTI_I2S, giving the
+     * canonical axes to reorient to
+     * @note The pixel data is reordered, but not resampled. The xform matrices will also be
+     * adjusted in line with the transformation
+    **/
+    NiftiImage & reorient (const int i, const int j, const int k);
     
     /**
      * Update the image from an R array
      * @param array An R array object
     **/
-    void update (const SEXP array);
+    NiftiImage & update (const SEXP array);
     
     /**
      * Obtain an xform matrix, indicating the orientation of the image
@@ -1024,7 +1038,7 @@ inline void NiftiImage::setPixunits (const std::vector<std::string> &pixunits)
     }
 }
 
-inline void NiftiImage::rescale (const std::vector<float> &scales)
+inline NiftiImage & NiftiImage::rescale (const std::vector<float> &scales)
 {
     std::vector<float> pixdim(image->pixdim+1, image->pixdim+4);
     
@@ -1046,13 +1060,181 @@ inline void NiftiImage::rescale (const std::vector<float> &scales)
     
     image->scl_slope = 0.0;
     image->scl_inter = 0.0;
+    
+    return *this;
 }
 
-inline void NiftiImage::update (const SEXP array)
+inline NiftiImage & NiftiImage::reorient (const int icode, const int jcode, const int kcode)
+{
+    if (this->isNull())
+        return *this;
+    if (image->qform_code == 0 && image->sform_code == 0)
+    {
+        Rf_warning("Image qform and sform codes are both zero, so it cannot be reoriented");
+        return *this;
+    }
+    
+    int used[6] = { 0, 0, 0, 0, 0, 0 };
+    used[icode-1] = 1;
+    used[jcode-1] = 1;
+    used[kcode-1] = 1;
+    if (used[0]+used[1] != 1 || used[2]+used[3] != 1 || used[4]+used[5] != 1)
+        throw std::runtime_error("Each canonical axis should be used exactly once");
+    
+    const int codes[3] = { icode, jcode, kcode };
+    const mat44 native = this->xform();
+    
+    // Create a target xform (rotation matrix only)
+    mat33 target;
+    for (int j=0; j<3; j++)
+    {
+        for (int i=0; i<3; i++)
+            target.m[i][j] = 0.0;
+        
+        switch (codes[j])
+        {
+            case NIFTI_L2R: target.m[0][j] =  1.0; break;
+            case NIFTI_R2L: target.m[0][j] = -1.0; break;
+            case NIFTI_P2A: target.m[1][j] =  1.0; break;
+            case NIFTI_A2P: target.m[1][j] = -1.0; break;
+            case NIFTI_I2S: target.m[2][j] =  1.0; break;
+            case NIFTI_S2I: target.m[2][j] = -1.0; break;
+        }
+    }
+    
+    // Extract (inverse of) canonical axis matrix from native xform
+    int nicode, njcode, nkcode;
+    nifti_mat44_to_orientation(native, &nicode, &njcode, &nkcode);
+    int ncodes[3] = { nicode, njcode, nkcode };
+    mat33 nativeAxesTransposed;
+    for (int i=0; i<3; i++)
+    {
+        for (int j=0; j<3; j++)
+            nativeAxesTransposed.m[i][j] = 0.0;
+
+        switch (ncodes[i])
+        {
+            case NIFTI_L2R: nativeAxesTransposed.m[i][0] =  1.0; break;
+            case NIFTI_R2L: nativeAxesTransposed.m[i][0] = -1.0; break;
+            case NIFTI_P2A: nativeAxesTransposed.m[i][1] =  1.0; break;
+            case NIFTI_A2P: nativeAxesTransposed.m[i][1] = -1.0; break;
+            case NIFTI_I2S: nativeAxesTransposed.m[i][2] =  1.0; break;
+            case NIFTI_S2I: nativeAxesTransposed.m[i][2] = -1.0; break;
+        }
+    }
+    
+    // Check for no-op case
+    if (icode == nicode && jcode == njcode && kcode == nkcode)
+        return *this;
+    
+    // The transform is t(approx_old_xform) %*% target_xform
+    // The new xform is old_xform %*% transform
+    // NB: "transform" is really 4x4, but the last row and column are filled implicitly during the multiplication loop
+    mat33 transform = nifti_mat33_mul(nativeAxesTransposed, target);
+    mat44 result;
+    for (int i=0; i<4; i++)
+    {
+        for (int j=0; j<3; j++)
+            result.m[i][j] = native.m[i][0] * transform.m[0][j] + native.m[i][1] * transform.m[1][j] + native.m[i][2] * transform.m[2][j];
+        
+        result.m[i][3] = native.m[i][3];
+    }
+    
+    // Update the xforms with nonzero codes
+    if (image->qform_code > 0)
+    {
+        image->qto_xyz = result;
+        image->qto_ijk = nifti_mat44_inverse(image->qto_xyz);
+        nifti_mat44_to_quatern(image->qto_xyz, &image->quatern_b, &image->quatern_c, &image->quatern_d, &image->qoffset_x, &image->qoffset_y, &image->qoffset_z, NULL, NULL, NULL, &image->qfac);
+    }
+    if (image->sform_code > 0)
+    {
+        image->sto_xyz = result;
+        image->sto_ijk = nifti_mat44_inverse(image->sto_xyz);
+    }
+    
+    // Extract the mapping between dimensions and the signs
+    int locs[3], signs[3], newdim[3];
+    float newpixdim[3];
+    double maxes[3] = { R_NegInf, R_NegInf, R_NegInf };
+    for (int j=0; j<3; j++)
+    {
+        for (int i=0; i<3; i++)
+        {
+            const double value = static_cast<double>(transform.m[i][j]);
+            if (fabs(value) > maxes[j])
+            {
+                maxes[j] = fabs(value);
+                signs[j] = value > 0.0 ? 1 : -1;
+                locs[j] = i;
+            }
+        }
+        
+        // Permute dim and pixdim
+        newdim[j] = image->dim[locs[j]+1];
+        newpixdim[j] = image->pixdim[locs[j]+1];
+    }
+    
+    // Calculate strides in target space
+    ptrdiff_t strides[3];
+    strides[locs[0]] = 1;
+    for (int n=1; n<3; n++)
+        strides[locs[n]] = strides[locs[n-1]] * image->dim[locs[n-1]+1];
+    
+    if (image->data != NULL)
+    {    
+        size_t volSize = size_t(image->nx * image->ny * image->nz);
+        size_t nVolumes = std::max(size_t(1), image->nvox / volSize);
+        
+        const std::vector<double> oldData = this->getData<double>();
+        std::vector<double> newData(image->nvox);
+        
+        // Where the sign is negative we need to start at the end of the dimension
+        size_t volStart = 0;
+        for (int i=0; i<3; i++)
+        {
+            if (signs[i] < 0)
+                volStart += (image->dim[i+1] - 1) * strides[i];
+        }
+        
+        // Iterate over the data and place it into a new vector
+        std::vector<double>::const_iterator it = oldData.begin();
+        for (size_t v=0; v<nVolumes; v++)
+        {
+            for (int k=0; k<image->nz; k++)
+            {
+                ptrdiff_t offset = k * strides[2] * signs[2];
+                for (int j=0; j<image->ny; j++)
+                {
+                    for (int i=0; i<image->nx; i++)
+                    {
+                        newData[volStart + offset] = *it++;
+                        offset += strides[0] * signs[0];
+                    }
+                    offset += strides[1] * signs[1] - image->nx * strides[0] * signs[0];
+                }
+            }
+            volStart += volSize;
+        }
+        
+        // Replace the existing data in the image
+        this->replaceData(newData);
+    }
+    
+    // Copy new dims and pixdims in
+    // NB: Old dims are used above, so this must happen last
+    std::copy(newdim, newdim+3, image->dim+1);
+    std::copy(newpixdim, newpixdim+3, image->pixdim+1);
+    nifti_update_dims_from_array(image);
+    
+    return *this;
+}
+
+inline NiftiImage & NiftiImage::update (const SEXP array)
 {
     Rcpp::RObject object(array);
     if (!object.hasAttribute("dim"))
-        return;
+        return *this;
     
     for (int i=0; i<8; i++)
         image->dim[i] = 0;
@@ -1102,6 +1284,8 @@ inline void NiftiImage::update (const SEXP array)
     
     image->scl_slope = 0.0;
     image->scl_inter = 0.0;
+    
+    return *this;
 }
 
 inline mat44 NiftiImage::xform (const bool preferQuaternion) const
@@ -1174,10 +1358,10 @@ inline std::vector<TargetType> NiftiImage::getData () const
     return data;
 }
 
-inline void NiftiImage::changeDatatype (const short datatype)
+inline NiftiImage & NiftiImage::changeDatatype (const short datatype)
 {
     if (this->isNull() || image->datatype == datatype)
-        return;
+        return *this;
     
     if (image->data != NULL)
     {
@@ -1237,18 +1421,20 @@ inline void NiftiImage::changeDatatype (const short datatype)
     
     image->datatype = datatype;
     nifti_datatype_sizes(datatype, &image->nbyper, &image->swapsize);
+    
+    return *this;
 }
 
-inline void NiftiImage::changeDatatype (const std::string &datatype)
+inline NiftiImage & NiftiImage::changeDatatype (const std::string &datatype)
 {
-    changeDatatype(internal::stringToDatatype(datatype));
+    return changeDatatype(internal::stringToDatatype(datatype));
 }
 
 template <typename SourceType>
-inline void NiftiImage::replaceData (const std::vector<SourceType> &data, const short datatype)
+inline NiftiImage & NiftiImage::replaceData (const std::vector<SourceType> &data, const short datatype)
 {
     if (this->isNull())
-        return;
+        return *this;
     else if (data.size() != image->nvox)
         throw std::runtime_error("New data length does not match the number of voxels in the image");
     
@@ -1267,6 +1453,8 @@ inline void NiftiImage::replaceData (const std::vector<SourceType> &data, const 
     image->scl_inter = 0.0;
     image->cal_min = static_cast<float>(*std::min_element(data.begin(), data.end()));
     image->cal_max = static_cast<float>(*std::max_element(data.begin(), data.end()));
+    
+    return *this;
 }
 
 inline void NiftiImage::toFile (const std::string fileName, const short datatype) const
