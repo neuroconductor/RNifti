@@ -28,7 +28,7 @@
 #' 
 #' @author Jon Clayden <code@@clayden.org>
 #' @seealso \code{\link{writeNifti}}
-#' @references The NIfTI-1 standard (\url{http://nifti.nimh.nih.gov/nifti-1}).
+#' @references The NIfTI-1 standard (\url{http://www.nitrc.org/docman/view.php/26/64/nifti1.h}).
 #' @export
 readNifti <- function (file, internal = FALSE)
 {
@@ -63,7 +63,7 @@ readNifti <- function (file, internal = FALSE)
 #' 
 #' @author Jon Clayden <code@@clayden.org>
 #' @seealso \code{\link{readNifti}}, \code{\link{updateNifti}}
-#' @references The NIfTI-1 standard (\url{http://nifti.nimh.nih.gov/nifti-1}).
+#' @references The NIfTI-1 standard (\url{http://www.nitrc.org/docman/view.php/26/64/nifti1.h}).
 #' @export
 writeNifti <- function (image, file, template = NULL, datatype = "auto")
 {
@@ -137,7 +137,7 @@ updateNifti <- function (image, template = NULL)
 #' dumpNifti(array(0L, dim=c(10,10)))
 #' 
 #' @author Jon Clayden <code@@clayden.org>
-#' @references The NIfTI-1 standard (\url{http://nifti.nimh.nih.gov/nifti-1}).
+#' @references The NIfTI-1 standard (\url{http://www.nitrc.org/docman/view.php/26/64/nifti1.h}).
 #' @export
 dumpNifti <- function (image)
 {
@@ -154,11 +154,6 @@ print.niftiHeader <- function (x, ...)
     
     for (i in seq_along(widths))
         cat(paste0(paste(rep(" ",maxWidth-widths[i]),collapse=""), names(x)[i], ": ", paste(format(x[[i]],trim=TRUE),collapse="  "), "\n"))
-}
-
-reorientNifti <- function (image, orientation)
-{
-    .Call("reorientImage", image, orientation, PACKAGE="RNifti")
 }
 
 rescaleNifti <- function (image, scales)

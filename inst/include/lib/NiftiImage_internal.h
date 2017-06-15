@@ -200,6 +200,8 @@ inline short stringToDatatype (const std::string &datatype)
         return datatypeCodes[lowerCaseDatatype];
 }
 
+#ifndef _NO_R__
+
 template <typename TargetType>
 inline void copyIfPresent (const Rcpp::List &list, const std::set<std::string> names, const std::string &name, TargetType &target)
 {
@@ -215,6 +217,8 @@ inline void copyIfPresent (const Rcpp::List &list, const std::set<std::string> n
         target = static_cast<char>(Rcpp::as<int>(list[name]));
 }
 
+#endif // _NO_R__
+
 inline mat33 topLeftCorner (const mat44 &matrix)
 {
     mat33 newMatrix;
@@ -226,6 +230,8 @@ inline mat33 topLeftCorner (const mat44 &matrix)
     
     return newMatrix;
 }
+
+#ifndef _NO_R__
 
 template <int SexpType>
 inline Rcpp::RObject imageDataToArray (const nifti_image *source)
@@ -290,6 +296,8 @@ inline void addAttributes (Rcpp::RObject &object, nifti_image *source, const boo
     R_RegisterCFinalizerEx(SEXP(xptr), &finaliseNiftiImage, FALSE);
     object.attr(".nifti_image_ptr") = xptr;
 }
+
+#endif // _NO_R__
 
 } // namespace
 

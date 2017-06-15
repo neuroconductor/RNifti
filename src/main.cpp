@@ -9,6 +9,17 @@ using namespace RNifti;
 
 typedef std::vector<float> float_vector;
 
+bool isInternal (RObject object)
+{
+    CharacterVector classNames = object.attr("class");
+    for (int i=0; i<classNames.length(); i++)
+    {
+        if (classNames[i] == "internalImage")
+            return true;
+    }
+    return false;
+}
+
 RcppExport SEXP readNifti (SEXP _object, SEXP _internal)
 {
 BEGIN_RCPP
@@ -75,6 +86,10 @@ BEGIN_RCPP
     NiftiImage image(_image);
     NumericMatrix matrix(_matrix);
     
+    // Duplicate the image object if necessary
+    if (NAMED(_image) == 2)
+        image = image;
+    
     if (matrix.cols() != 4 || matrix.rows() != 4)
         throw std::runtime_error("Specified affine matrix does not have dimensions of 4x4");
     mat44 xform;
@@ -109,20 +124,32 @@ BEGIN_RCPP
         }
     }
     
+    // If the image was copied above it will have been marked nonpersistent
     if (image.isPersistent())
         return _image;
     else
-        return image.toArray();
+        return image.toArrayOrPointer(isInternal(_image), "NIfTI image");
 END_RCPP
 }
 
-RcppExport SEXP reorientImage (SEXP _image, SEXP _axes)
+RcppExport SEXP getOrientation (SEXP _image, SEXP _preferQuaternion)
 {
 BEGIN_RCPP
-    const NiftiImage image(_image);
-    NiftiImage newImage(image);
-    newImage.reorient(as<std::string>(_axes));
-    return newImage.toPointer("NIfTI image");
+    const NiftiImage image(_image, false);
+    const bool preferQuaternion = as<bool>(_preferQuaternion);
+    const std::string orientation = NiftiImage::xformToString(image.xform(preferQuaternion));
+    return wrap(orientation);
+END_RCPP
+}
+
+RcppExport SEXP setOrientation (SEXP _image, SEXP _axes)
+{
+BEGIN_RCPP
+    NiftiImage image(_image);
+    if (NAMED(_image) == 2)
+        image = image;
+    image.reorient(as<std::string>(_axes));
+    return image.toArrayOrPointer(isInternal(_image), "NIfTI image");
 END_RCPP
 }
 
@@ -153,7 +180,8 @@ static R_CallMethodDef callMethods[] = {
     { "dumpNifti",      (DL_FUNC) &dumpNifti,       1 },
     { "getXform",       (DL_FUNC) &getXform,        2 },
     { "setXform",       (DL_FUNC) &setXform,        3 },
-    { "reorientImage",  (DL_FUNC) &reorientImage,   2 },
+    { "getOrientation", (DL_FUNC) &getOrientation,  2 },
+    { "setOrientation", (DL_FUNC) &setOrientation,  2 },
     { "rescaleImage",   (DL_FUNC) &rescaleImage,    2 },
     { "pointerToArray", (DL_FUNC) &pointerToArray,  1 },
     { NULL, NULL, 0 }
