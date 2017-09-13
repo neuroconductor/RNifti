@@ -20,7 +20,10 @@ struct DataRescaler
 template <typename SourceType, typename TargetType>
 inline TargetType convertValue (SourceType value)
 {
-    return static_cast<TargetType>(value);
+    if (std::numeric_limits<SourceType>::has_quiet_NaN && !std::numeric_limits<TargetType>::has_quiet_NaN && ISNAN(value))
+        return TargetType(0);
+    else
+        return static_cast<TargetType>(value);
 }
 
 template <typename TargetType, class OutputIterator>
@@ -242,8 +245,12 @@ inline Rcpp::RObject imageDataToArray (const nifti_image *source)
     {
         Rf_warning("Internal image contains no data - filling array with NAs");
         Rcpp::Vector<SexpType> array(static_cast<int>(source->nvox));
-        // Rcpp's proxy infrastructure should handle converting NA_REAL to the appropriate NA
-        std::fill(array.begin(), array.end(), NA_REAL);
+        if (SexpType == INTSXP || SexpType == LGLSXP)
+            std::fill(array.begin(), array.end(), NA_INTEGER);
+        else if (SexpType == REALSXP)
+            std::fill(array.begin(), array.end(), NA_REAL);
+        else
+            throw std::runtime_error("Only numeric arrays can be created");
         return array;
     }
     else
