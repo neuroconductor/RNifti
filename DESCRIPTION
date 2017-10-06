@@ -3,8 +3,10 @@ Version: 0.7.1
 Date: 2017-09-13
 Title: Fast R and C++ Access to NIfTI Images
 Authors@R: c(person("Jon","Clayden",role=c("cre","aut"),email="code@clayden.org"),             person("Bob","Cox",role="aut"),             person("Mark","Jenkinson",role="aut"),             person("Matt","Hall",role="ctb"),             person("Rick","Reynolds",role="ctb"),             person("Kate","Fissell",role="ctb"),             person("Jean-loup","Gailly",role="cph"),             person("Mark","Adler",role="cph"))
-Imports:    Rcpp (>= 0.11.0)
-Suggests:    testthat (>= 0.11.0)
+Imports: Rcpp (>= 0.11.0)
+Suggests: 
+    testthat (>= 0.11.0),
+    covr
 Enhances: oro.nifti, tractor.base
 LinkingTo: Rcpp
 Description: Provides very fast access to images stored in the NIfTI-1 file
@@ -17,4 +19,3 @@ BugReports: https://github.com/jonclayden/RNifti/issues
 Encoding: UTF-8
 RoxygenNote: 6.0.1
 biocViews:
-
