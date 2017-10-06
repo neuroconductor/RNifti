@@ -1,20 +1,49 @@
-
-
-
-
-
-
-
 language: r
 sudo: false
 cache: packages
-
 warnings_are_errors: true
-bioc_required: yes
-use_bioc: yes
-r_check_args: --as-cran
-r:
-- release
-
-
-
+use_bioc: true
+bioc_required: true
+cran: http://cran.rstudio.com
+os:
+- linux
+- osx
+env:
+  global:
+  - RGL_USE_NULL=TRUE
+  - PROJECT_NAME=neuroconductor
+r_check_args: "--as-cran"
+before_install:
+- export PROJ_DIR=`basename $PWD`
+- fname=travis_helpers.sh
+- wget -O ${fname} http://bit.ly/travis_helpers
+- cat ${fname}; source ${fname}; rm ${fname}
+- cat DESCRIPTION
+- Rscript -e 'source("https://install-github.me/mangothecat/callr")'
+- remove_neuroc_packages
+- cat DESCRIPTION
+- install_remotes_no_dep
+- cat DESCRIPTION
+- export PACKAGE_NAME=`package_name`
+- if [[ "${PACKAGE_NAME}" == "waveslim" ]]; then fftw_install ; fi
+after_success:
+- cat ${PACKAGE_NAME}.Rcheck/00install.out
+- cat ${PACKAGE_NAME}.Rcheck/00check.log
+after_failure:
+- cat ${PACKAGE_NAME}.Rcheck/00install.out
+- cat ${PACKAGE_NAME}.Rcheck/00check.log
+before_deploy:
+- travis_wait 100 R CMD INSTALL --build ${PKG_TARBALL}
+- if [[ "${TRAVIS_OS_NAME}" = "osx" ]]; then rm -f *.tar.gz; fi
+deploy:
+  provider: releases
+  skip_cleanup: true
+  file_glob: true
+  file: "${PACKAGE_NAME}*.t*gz"
+  on:
+    tags: true
+  api-key:
+    secure: aC87Aev2xQpIiyxP9f6NFQufBXU9pMpQALN4E0HSFuXlzF4w+M89d5LkMuA2Fq7FIxDii825w/+EWe+14ACsqMmg7rd/AvDVtqDhkj3N9wjdXUZkk6vI8oRSgYfcrbIBoOUIXfBLcrH9ARSi/IcVH743WffLfpm5mxM+6i16s8On7aJLGvR0wC7aBYo0lzsOErmfB7AVHEtusp6WxnOy4C/iCyj4zAOmy8iW3WS4ZQJLIapewVb2e6PjaAAs7qDvHSmEPUCphADAxDmP9N9NBfJ9ZGXJ+u02Xjg6aBEZu5jYXG7BtRFJK8Y+VlnC8w482/ZhnaRdl9UW+XlHmYWu7erHndi0uwCqIIwjzMTvpgMsfmiZ+36wMXoeYSZX1kr/CUmFL+E7GPZK8JroEk+b8pL45vUHDwU3fuF3nLnRcDoPbkSKHTNzFbbNgYNhv6UCcgue2kWvCtAoSvH58YMa/w2hGmyOFucKkSOMZLPo2ja+mULnU7jZJks84w0VBrtVZtZCdQDX824zPWSWdTiot5VcsLn8oBdkot5i+9C3EUedfrBkmV6BHE04Wkmjc+NsprVvCNcV82RSdjL71g9YsVWEdfIr73zYUKCPjYr3ltMtRBHPmBw/oOa8qC9b2vlHbHkXdG/6MLM7AlurlLvqVTq+kzUQOpIasjhhh7Z3wnA=
+after_deploy:
+- if [[ "${TRAVIS_OS_NAME}" == "linux" ]]; then Rscript -e 'covr::coveralls(type =
+  "all")' ; fi
