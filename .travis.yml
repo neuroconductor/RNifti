@@ -21,8 +21,9 @@ env:
   - RGL_USE_NULL=TRUE
   - PROJECT_NAME=neuroconductor
   - DISPLAY=:99.0
-r_check_args: "--as-cran"
+r_check_args: "--as-cran --install-args=--build"
 before_install:
+- ulimit -n 2048
 - export PROJ_DIR=`basename $PWD`
 - fname=travis_helpers.sh
 - wget -O ${fname} http://bit.ly/travis_helpers
@@ -38,6 +39,8 @@ before_install:
 - export PACKAGE_NAME=`package_name`
 - if [[ "${PACKAGE_NAME}" == "waveslim" ]]; then fftw_install ; fi
 - if [[ "${PACKAGE_NAME}" == "dti" ]]; then gsl_install ; fi
+- if [[ "${PACKAGE_NAME}" == "ROpenCVLite" ]]; then shopt -s expand_aliases ; x=`Rscript
+  -e "cat(Sys.which('R'))"` ; alias R="travis_wait 100 ${x}" ; fi
 after_success:
 - cat ${PACKAGE_NAME}.Rcheck/00install.out
 - cat ${PACKAGE_NAME}.Rcheck/00check.log
@@ -45,7 +48,6 @@ after_failure:
 - cat ${PACKAGE_NAME}.Rcheck/00install.out
 - cat ${PACKAGE_NAME}.Rcheck/00check.log
 before_deploy:
-- travis_wait 100 R CMD INSTALL --build ${PKG_TARBALL}
 - if [[ "${TRAVIS_OS_NAME}" = "osx" ]]; then rm -f *.tar.gz; fi
 deploy:
   provider: releases
@@ -55,7 +57,7 @@ deploy:
   on:
     tags: true
   api-key:
-    secure: CTuYVOioyJGC/TdWq4GohSzq8umSFagJ+MdwF+3K3wAWDEGXPjVniKyS+wBEjL54100MIPnMsVhabgJ0uIcbmKNW7EL9xA24oo5P2hgj5pizWAdqn8EhUjbr2HJJ7Zlr7kERY0eEel0vy9fTls8gVLC+v1sYxNCQBnT0qWGBpNbKY7FRgJ/rmYDuIlRa4uSQqLCE/lEhb683zXOsGRtlMPgcPqXPNitXL47zJv6qshZJx+HgkjzXhFf2awGdmwhtQKs12RCwhxTpcrQJgZ+MGCCXwe3IS5wlkRRXK3qMTQDnC95leQf66oQFGogW5vrGAVkDTYwZig5WZOGbyHjNaWCVfRAZy7tnQyWcM8cPubb0Ym8bJ+uv4AvGbZM0dJXDVJd1fkggFCgxYjX8dkE8edt6D5RGpdDBbZsyO/fHup1suvafy7yqtgejbCq7x762NvGasXTZB4wbXQF7unK1HaEXp6Lx/RaVWRsflcyr15U1eu4AS5UGWz8DkwGq4eXs2IeFeRwj+DmgTXDZPpD80ysrDzTxYJs8nmkbhkXvUPk0nwcGlN5cwwmegFdN7j8kIVv3UIqM/Llz3LqbZo40BRGsnUWvHx9cdiKjqrHLQ27MuTzQbrtfgVI5I5+oo3bnOsPBDLADwoGKdw9VZKdpAoFcF0ftqHWdQbrCw6r5/WA=
+    secure: nI/n1NvtRVM/stseMKq8mDH0GeD9ZwhZDCaIj4S6seU2+ByddL7C2E7HvnQQoPv3Ce1ilCLCzF0xI+5Jl5d6PS5NNh4ZZx1m+yd67CEmpzIHmHhEi4rLLuG4Vw1+cETCbrjXfgAgaCrvg7kPhndp0UGTB/Gd9kXbH+veaCjKk7s/amBW0H4JaUEeRajbW43ytMd/dL8hxi9QVtdoqo59LgT3aJ941PMP7+0RAMRxNiqcZig6CrXJ4MIXua/Q0UBrPfyDx3YzFw8NJM/UZqQfFuQ9Urrw3usbxpNCvLAgxi/qE6tW3EqSYNyBNjt0wRkV/nHgXoj1Xc+GTbsI/dpxURcLgwYUhy6s/xZY8drAmupSxvHnY4qFtqIch4PpbTzoknKOAltP6TYdjxg0ooEO6ZZIbiB4+XyWH2mGo3ihOil92xyPIW7/bNcYv/KGyPbK2eY1nM8E6BCKpSAHER4idXfbqSZiHoiyh11dsLQy4P2HHtWOPsEl/qgYyXawKlQSgJlUTSgP3Jim4loNfFOy1okuuj4iOmNbPxWjzOSIt9UREYj/YQ+8rXeWYSZRzPyvZzbPGgmtZ9FKQU29ObVZB5WAFjGwH1UIKr3+rIhd732ZwOhYcweUalbrfhMQ6vsLSDVc8O8Ulq0xy/4kIZzMDd6YNXgLUp1ZedhKkMFzLrg=
 after_deploy:
-- if [[ "${TRAVIS_OS_NAME}" == "linux" ]]; then Rscript -e 'covr::coveralls(type =
-  "all")' ; fi
+- if [[ "${TRAVIS_OS_NAME}" == "linux" ]]; then echo 'covr::coveralls(type = "all")'
+  > neuroc_covr.R ; travis_wait 100 Rscript neuroc_covr.R ; rm neuroc_covr.R ; fi
