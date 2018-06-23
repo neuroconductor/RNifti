@@ -10,12 +10,32 @@ init:
 
 environment:
   global:
-    USE_RTOOLS: true    
-    R_CHECK_INSTALL_ARGS: "--install-args=--build --no-multiarch"
+    USE_RTOOLS: true
+    R_CHECK_INSTALL_ARGS: "--install-args=--build --no-multiarch "
     WARNINGS_ARE_ERRORS: 1
+  matrix:
+    - R_VERSION: devel
+      R_VER: 3.6
+
+    - R_VERSION: release
+      R_VER: 3.5
+
+    - R_VERSION: oldrel
+      CRAN: http://cran.rstudio.com
+      R_VER: 3.4
+
+    - R_VERSION: 3.3.0
+      CRAN: http://cran.rstudio.com
+      R_VER: 3.3
+
+    - R_VERSION: 3.2.0
+      CRAN: http://cran.rstudio.com
+      R_VER: 3.2
 
 install:
   - ps: Bootstrap
+  - ps: (new-object net.webclient).DownloadFile('https://sourceforge.net/projects/mcmc-jags/files/JAGS/4.x/Windows/JAGS-4.2.0-Rtools33.exe', 'C:\projects\JAGS-4.2.0.exe')
+  - cmd: C:\projects\JAGS-4.2.0.exe /S  
 
 cache:
   - C:\RLibrary
@@ -25,11 +45,12 @@ build_script:
   - travis-tool.sh install_deps
 
 test_script:
-  - set TMP=C:\
-  - set TMPDIR=C:\
-  - set TEMP=C:\
+  - if not exist "C:\rtm" mkdir C:\rtm
+  - set TMP=C:/rtm
+  - set TEMP=C:/rtm
+  - set TMPDIR=C:/rtm
   # need to move to higher dir because CMake path req
-  - mkdir -p C:\run
+  - if not exist "C:\run" mkdir C:\run
   - cp -avr * C:\run
   # need the tool a level above
   - cp ../travis-tool.sh C:\
@@ -56,6 +77,11 @@ test_script:
   # - cp ../*.zip ./
   - cp -r C:/run/* %APPVEYOR_BUILD_FOLDER%
   - cd %APPVEYOR_BUILD_FOLDER%
+  - for %%i in (*.zip) do echo %%~ni> zip_filename.txt
+  - SET /P PKG_TARBALL=<zip_filename.txt
+  - del zip_filename.txt
+  - rename %PKG_TARBALL%.zip %PKG_TARBALL%_R%R_VER%.zip
+  - echo Built tarball is %PKG_TARBALL%_R%R_VER%.zip
 
 on_failure:
   - 7z a failure.zip *.Rcheck\*
@@ -74,7 +100,7 @@ artifacts:
   - path: '*.Rcheck\**\*.Rout'
     name: Logs
 
-  - path: '\*_*.zip'
+  - path: '\*_*_*.zip'
     name: Bits
 
 deploy:

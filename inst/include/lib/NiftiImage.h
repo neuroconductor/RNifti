@@ -2,7 +2,7 @@
 #define _NIFTI_IMAGE_H_
 
 
-#ifndef _NO_R__
+#ifdef USING_R
 
 #include <Rcpp.h>
 
@@ -103,7 +103,7 @@ public:
         std::vector<TargetType> getData () const;
     };
     
-#ifndef _NO_R__ 
+#ifdef USING_R
     /**
      * Convert between R \c SEXP object type and \c nifti_image datatype codes
      * @param sexpType A numeric R \c SEXP type code
@@ -172,7 +172,7 @@ protected:
     void copy (const Block &source);
 
 
-#ifndef _NO_R__
+#ifdef USING_R
 
     /**
      * Initialise the object from an S4 object of class \c "nifti"
@@ -283,7 +283,15 @@ public:
 #endif
     }
     
-#ifndef _NO_R__ 
+    /**
+     * Initialise using a path string and sequence of required volumes
+     * @param path A string specifying a path to a valid NIfTI-1 file, possibly gzipped
+     * @param volumes The volumes to read in (squashing all dimensions above the third together)
+     * @exception runtime_error If reading from the file fails, or \c volumes is empty
+    **/
+    NiftiImage (const std::string &path, const std::vector<int> &volumes);
+    
+#ifdef USING_R
     /**
      * Initialise from an R object
      * @param object The source object
@@ -495,7 +503,7 @@ public:
     **/
     NiftiImage & reorient (const std::string &orientation);
     
-#ifndef _NO_R__
+#ifdef USING_R
     /**
      * Update the image from an R array
      * @param array An R array or list object
@@ -581,7 +589,7 @@ public:
     **/
     void toFile (const std::string fileName, const std::string &datatype) const;
     
-#ifndef _NO_R__
+#ifdef USING_R
     
     /**
      * Create an R array from the image
@@ -671,7 +679,7 @@ inline void NiftiImage::copy (const Block &source)
     persistent = false;
 }
 
-#ifndef _NO_R__
+#ifdef USING_R
 
 // Convert an S4 "nifti" object, as defined in the oro.nifti package, to a "nifti_image" struct
 inline void NiftiImage::initFromNiftiS4 (const Rcpp::RObject &object, const bool copyData)
@@ -962,7 +970,29 @@ inline NiftiImage::NiftiImage (const SEXP object, const bool readData)
 #endif
 }
 
-#endif // _NO_R__
+#endif // USING_R
+
+inline NiftiImage::NiftiImage (const std::string &path, const std::vector<int> &volumes)
+    : persistent(false)
+{
+    if (volumes.empty())
+        throw std::runtime_error("The vector of volumes is empty");
+    
+    nifti_brick_list brickList;
+    this->image = nifti_image_read_bricks(path.c_str(), volumes.size(), &volumes[0], &brickList);
+    if (this->image == NULL)
+        throw std::runtime_error("Failed to read image from path " + path);
+    
+    size_t brickSize = image->nbyper * image->nx * image->ny * image->nz;
+    image->data = calloc(1, nifti_get_volsize(image));
+    for (int i=0; i<brickList.nbricks; i++)
+        memcpy((char *) image->data + i * brickSize, brickList.bricks[i], brickSize);
+    nifti_free_NBL(&brickList);
+    
+#ifndef NDEBUG
+    Rprintf("Creating NiftiImage with pointer %p (from string and volume vector)\n", this->image);
+#endif
+}
 
 inline void NiftiImage::updatePixdim (const std::vector<float> &pixdim)
 {
@@ -1259,7 +1289,7 @@ inline NiftiImage & NiftiImage::reorient (const std::string &orientation)
     return reorient(codes[0], codes[1], codes[2]);
 }
 
-#ifndef _NO_R__
+#ifdef USING_R
 
 inline NiftiImage & NiftiImage::update (const Rcpp::RObject &object)
 {
@@ -1340,7 +1370,7 @@ inline NiftiImage & NiftiImage::update (const Rcpp::RObject &object)
     return *this;
 }
 
-#endif// _NO_R__
+#endif // USING_R
 
 inline mat44 NiftiImage::xform (const bool preferQuaternion) const
 {
@@ -1532,7 +1562,7 @@ inline void NiftiImage::toFile (const std::string fileName, const std::string &d
     toFile(fileName, internal::stringToDatatype(datatype));
 }
 
-#ifndef _NO_R__
+#ifdef USING_R
 
 inline Rcpp::RObject NiftiImage::toArray () const
 {
@@ -1649,7 +1679,7 @@ inline Rcpp::RObject NiftiImage::headerToList () const
     return result;
 }
 
-#endif // _NO_R__
+#endif // USING_R
 
 } // namespace
 
