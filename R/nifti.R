@@ -10,8 +10,13 @@
 #'   class \code{"internalImage"}, which contains only minimal metadata about
 #'   the image. Either way, the return value has an attribute which points to a
 #'   C data structure containing the full image.
-#' @return An array or internal image, with class \code{"niftiImage"}, and
-#'   possibly also \code{"internalImage"}.
+#' @param volumes An integer vector giving the volumes to read (counting along
+#'   all dimensions beyond the third jointly), or \code{NULL}, the default, in
+#'   which case every volume is read. This cannot currently be set differently
+#'   for each file read.
+#' @return An array or internal image, with class \code{"niftiImage"} (and
+#'   possibly also \code{"internalImage"}), or a list of such objects if
+#'   \code{file} has length greater than one.
 #' 
 #' @note If the \code{internal} argument is \code{FALSE} (the default), the
 #'   data type of the image pointer will be set to match one of R's native
@@ -30,16 +35,16 @@
 #' @seealso \code{\link{writeNifti}}
 #' @references The NIfTI-1 standard (\url{http://www.nitrc.org/docman/view.php/26/64/nifti1.h}).
 #' @export
-readNifti <- function (file, internal = FALSE)
+readNifti <- function (file, internal = FALSE, volumes = NULL)
 {
     if (!is.character(file))
         stop("File name(s) must be specified in a character vector")
     if (length(file) == 0)
         stop("File name vector is empty")
     else if (length(file) > 1)
-        lapply(file, function(f) .Call("readNifti", path.expand(f), internal, PACKAGE="RNifti"))
+        lapply(file, function(f) .Call("readNifti", path.expand(f), internal, volumes, PACKAGE="RNifti"))
     else
-        .Call("readNifti", path.expand(file), internal, PACKAGE="RNifti")
+        .Call("readNifti", path.expand(file), internal, volumes, PACKAGE="RNifti")
 }
 
 #' Write a NIfTI-1 format file
@@ -94,7 +99,7 @@ writeNifti <- function (image, file, template = NULL, datatype = "auto")
 #' @export
 retrieveNifti <- function (object)
 {
-    .Call("readNifti", object, TRUE, PACKAGE="RNifti")
+    .Call("readNifti", object, TRUE, NULL, PACKAGE="RNifti")
 }
 
 #' Update an internal NIfTI-1 object using a template
