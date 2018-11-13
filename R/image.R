@@ -42,7 +42,7 @@ print.niftiImage <- function (x, ...)
     pixdim <- attr(x, "pixdim")
     pixunits <- attr(x, "pixunits")
     
-    if ("internalImage" %in% class(x))
+    if (inherits(x, "internalImage"))
         cat(paste0("Internal image: \"", x, "\"\n"))
     else
         cat(paste0("Image array of mode \"", storage.mode(x), "\" (", format(object.size(x),"auto"), ")\n"))
@@ -122,10 +122,14 @@ pixdim.default <- function (object)
 {
     if (!is.null(attr(object, "pixdim")))
         return (attr(object, "pixdim"))
-    else if (!is.null(dim(object)))
-        return (rep(1, length(dim(object))))
     else
-        return (1)
+    {
+        value <- try(attr(niftiHeader(object), "pixdim"), silent=TRUE)
+        if (inherits(value, "try-error"))
+            return (1)
+        else
+            return (value)
+    }
 }
 
 #' @rdname pixdim
@@ -139,7 +143,7 @@ pixdim.default <- function (object)
 #' @export
 "pixdim<-.default" <- function (object, value)
 {
-    if ("internalImage" %in% class(object))
+    if (inherits(object, "internalImage"))
         stop("Pixel dimensions of an internal image cannot be changed")
     
     if (is.numeric(value))
@@ -166,7 +170,13 @@ pixunits.default <- function (object)
     if (!is.null(attr(object, "pixunits")))
         return (attr(object, "pixunits"))
     else
-        return ("Unknown")
+    {
+        value <- try(attr(niftiHeader(object), "pixunits"), silent=TRUE)
+        if (inherits(value, "try-error"))
+            return ("Unknown")
+        else
+            return (value)
+    }
 }
 
 #' @rdname pixdim
@@ -180,7 +190,7 @@ pixunits.default <- function (object)
 #' @export
 "pixunits<-.default" <- function (object, value)
 {
-    if ("internalImage" %in% class(object))
+    if (inherits(object, "internalImage"))
         stop("Pixel units of an internal image cannot be changed")
     
     if (is.character(value))

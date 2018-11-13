@@ -5,7 +5,7 @@ test_that("NIfTI objects can be created from data", {
     image <- retrieveNifti(data)
     
     expect_equal(ndim(data), 3L)
-    expect_is(image, "internalImage")
+    expect_s3_class(image, "internalImage")
     expect_equal(dim(image), c(3L,2L,4L))
     expect_equal(pixdim(data), c(1,1,1))
     expect_equal(pixdim(image), c(1,1,1))
@@ -25,8 +25,12 @@ test_that("NIfTI files can be read and written", {
     expect_output(print(readNifti(imagePath,internal=TRUE)), "2.5 mm per voxel")
     
     image <- readNifti(imagePath)
+    expect_s3_class(image, "niftiImage")
     expect_equal(image[40,40,30], 368)
     expect_equal(pixunits(image), c("mm","s"))
+    
+    expect_equal(pixdim(imagePath), c(2.5,2.5,2.5))
+    expect_equal(pixunits(imagePath), c("mm","s"))
     
     data <- as.vector(image)        # strips all attributes
     expect_equal(pixdim(data), 1)
@@ -54,6 +58,8 @@ test_that("NIfTI files can be read and written", {
     expect_equal(round(compressedImage[40,40,30]), 363)
     
     image <- readNifti(imagePath, internal=TRUE)
+    expect_s3_class(image, "internalImage")
+    expect_s3_class(image, "niftiImage")
     expect_equal(as.array(image)[40,40,30], 368)
     expect_error(dim(image) <- c(60L,96L,96L))
     
@@ -63,7 +69,7 @@ test_that("NIfTI files can be read and written", {
     expect_output(print(image), "x 1 s")    # time units only appear for 4D+ images
     
     analyze <- analyzeHeader()
-    expect_is(analyze, "analyzeHeader")
+    expect_s3_class(analyze, "analyzeHeader")
     expect_output(print(analyze), "ANALYZE-7.5")
     expect_equal(analyze$regular, "r")
 })
@@ -87,4 +93,13 @@ test_that("image objects can be manipulated", {
     image <- RNifti:::rescaleNifti(image, c(0.5,0.5,0.5))
     expect_equal(pixdim(image), c(5,5,5))
     expect_warning(as.array(image), "no data")
+})
+
+test_that("NIfTI objects have the expected copying semantics", {
+    im1 <- readNifti(system.file("extdata", "example.nii.gz", package="RNifti"), internal=TRUE)
+    im2 <- im1
+    # Only applies for internal images, because otherwise the data will be updated to match the R array
+    expect_true(all(RNifti:::addresses(im1) == RNifti:::addresses(im2)))
+    im1$intent_code <- 1000L
+    expect_false(all(RNifti:::addresses(im1) == RNifti:::addresses(im2)))
 })
