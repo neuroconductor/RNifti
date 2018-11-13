@@ -39,7 +39,7 @@ before_install:
 - cat ${fname}; source ${fname}; rm ${fname}
 - cat DESCRIPTION
 - start_xvfb ;
-- export rver=`r_version`;
+- export rver=`r_version`; echo $rver ;
 - if [ "$TRAVIS_OS_NAME" = "osx" ]; then no_open_mp ; fi
 - jags_install
 - remove_neuroc_packages
@@ -54,6 +54,7 @@ before_install:
   shopt -s expand_aliases ; x=`Rscript -e "cat(Sys.which('R'))"` ; echo "reset R"
   ; alias R="travis_wait 100 ${x}" ; fi
 - install_python_requirements ;
+- R CMD javareconf ;
 after_success:
 - cat ${PACKAGE_NAME}.Rcheck/00install.out
 - cat ${PACKAGE_NAME}.Rcheck/00check.log
@@ -77,7 +78,7 @@ deploy:
   on:
     tags: true
   api-key:
-    secure: RW3F/yMgnmvo6lk69+V3FbVlih8o7HpshH9xZQ0+CIo16kp/HDnuinElXg8J7nZOPSTGPVif5c8fFeb2e9tM6TGrX/WtJMPGWYCuhA7E2Jy1/j57PMGZhRYwvzJM+oOHNcs5i4JYXDvyc5uZ+l6WF6vJkv06VVq+jd0m3DbxyUE9rV6OoQc9QUAr7xvQFxNv5Rj7YmUs5aLMZOrjp+E9heDdggmYzLBjfRsgXv1Q/t37P1MW6wQhrnW286aDKltOVcaIx+C5SnyQWQWGvvEiPrEEKIH1DSpEoIJFY2GoVG4mk3DtBRcEwYhLY6ezH8t4s26pJLNVDwVO++OUS/gyo1+92IXPp0+N1/VRGul3+LktFMWxMVywKsuDD9yM/Kbm+G4dRz+8BjwxdOAUmAqLXlp6xGplrZREjrRjcHQ4AjvbSg1+ad2K2P9k5sQyZhXrTANRgjVgs+FPj0R1RIIm+zbs02CszvvwXfnskLWGzXyLkctD5P4NTAfK5Y7zizX2nAkj5iYrW2puOqfEvB7nP+pCjONRP6Wd4tCtEh6EDF/VTVWAQLZvKQLBo5DKf9OJkNoo9cascRxFJevfdzvWp4RgrVNLf5/rX/h7WPGZWIsO1GqH+fLV13tnGDG7zobnXz8UfJP/E+bTiU5nPZuUVYTVeE/Nk4xyetpPSjN2ybc=
+    secure: pvCv7Ti5o97SncYMILN/2mXh2FFGkL5E8SNAAMxoAN0WQqhKXbo1xCRO+cSYSVIAQwIMYzH1XMI0Fhg4N9UHkLQzyIewGcZDiDjDovLA9yNv1k7ABvl35TarWnjHrk8GrTImndyHwytjJ1zv4aC/PLQDVYdke4QoEIeA0xoeQ1P//iGYPaAC63g3ABVM+1cuqfOpP6jmlK1Z4/C8kpmVHfeqlUvITdWTzgX8A9Tos+gvvdHLM/RcZMzuyOH1z3THcihjV5f/lgX6pE0ejhVwHFlXZiMbr2u47QKODx3BaY0hHJ9n+bv0W4ovIjGwk0rSr4z+WqBH+4vpYqtzjAc4pTsQYa5z3ZsCIgD+as6D/6Gf0icU5f4aET/Q9TDVSPPwmn1Sn4//PX3aR62jaYaD9Y0BDJWX8IOzkdwHfEtkC9/fMyfWSzBm1Io4hY1NBV+0hioZxrB0dJS8dtci4Pvw0/WuUb9Gr2Lt0Uybq9gyilx4avMVggn71T76Ifjpsl0eT5OPuboWjdmIYWI0TWUyHakMagWwaBIvzqHRAo6Crf7ZDT16JtQkYdIK7G7+dbWjkeBnDPVcXObXgoa9K358F+SqUlPstAvmL6ngV2cREviKJoRL0Mv4dYbMryO1Z/Qrh/gz6dTiFc9m/o6bdG5eWPy4W1DZWJx4z4O7QkhHMso=
 after_deploy:
 - if [[ "${TRAVIS_OS_NAME}" == "linux" && ${TRAVIS_R_VERSION_STRING} = "release" ]];
   then echo 'covr::coveralls(type = "all", quiet = FALSE)' > neuroc_covr.R ; travis_wait
