@@ -14,9 +14,11 @@ platform: x64
 
 environment:
   global:
+    NOT_CRAN: true    
     USE_RTOOLS: true
     # R_CHECK_INSTALL_ARGS: "--install-args=--build --no-multiarch "
     R_CHECK_ARGS: "--no-multiarch --no-manual "
+    R_REMOTES_NO_ERRORS_FROM_WARNINGS: true    
     WARNINGS_ARE_ERRORS: 1
     PYTHON_VERSION: 3.6
     MINICONDA: C:\Miniconda3-x64
@@ -132,3 +134,5 @@ deploy:
   prerelease: false
   on:
     appveyor_repo_tag: true
+
+# neuroc.deps commit id:677699e
