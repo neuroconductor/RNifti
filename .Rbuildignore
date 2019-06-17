@@ -1,7 +1,3 @@
-^\./appveyor\.yml\.bak$
-^appveyor\.yml$
-^\./\.travis\.yml\.bak$
-^DESCRIPTION\.bak$
 ^Doxyfile$
 ^\.travis\.yml$
 ^appveyor.yml$
