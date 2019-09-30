@@ -783,16 +783,7 @@ public:
      * @param readData If \c true, the data will be read as well as the metadata
      * @exception runtime_error If reading from the file fails
     **/
-    NiftiImage (const std::string &path, const bool readData = true)
-        : image(NULL), refCount(NULL)
-    {
-        acquire(nifti_image_read(path.c_str(), readData));
-        if (image == NULL)
-            throw std::runtime_error("Failed to read image from path " + path);
-#ifndef NDEBUG
-        Rc_printf("Creating NiftiImage with pointer %p (from string)\n", this->image);
-#endif
-    }
+    NiftiImage (const std::string &path, const bool readData = true);
     
     /**
      * Initialise using a path string and sequence of required volumes
@@ -1134,15 +1125,17 @@ public:
      * Write the image to a NIfTI-1 file
      * @param fileName The file name to write to, with appropriate suffix (e.g. ".nii.gz")
      * @param datatype The datatype to use when writing the file
+     * @return A pair of strings, giving the final header and image paths in that order
     **/
-    void toFile (const std::string fileName, const int datatype = DT_NONE) const;
+    std::pair<std::string,std::string> toFile (const std::string fileName, const int datatype = DT_NONE) const;
     
     /**
      * Write the image to a NIfTI-1 file
      * @param fileName The file name to write to, with appropriate suffix (e.g. ".nii.gz")
      * @param datatype The datatype to use when writing the file, or "auto"
+     * @return A pair of strings, giving the final header and image paths in that order
     **/
-    void toFile (const std::string fileName, const std::string &datatype) const;
+    std::pair<std::string,std::string> toFile (const std::string fileName, const std::string &datatype) const;
     
 #ifdef USING_R
     

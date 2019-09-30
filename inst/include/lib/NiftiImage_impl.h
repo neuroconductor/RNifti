@@ -118,6 +118,12 @@ inline int stringToDatatype (const std::string &datatype)
 }
 
 #ifdef USING_R
+inline const char * stringToPath (const std::string &str) { return R_ExpandFileName(str.c_str()); }
+#else
+inline const char * stringToPath (const std::string &str) { return str.c_str(); }
+#endif
+
+#ifdef USING_R
 
 template <typename TargetType>
 inline void copyIfPresent (const Rcpp::List &list, const std::set<std::string> names, const std::string &name, TargetType &target)
@@ -402,7 +408,7 @@ inline std::string NiftiImage::xformToString (const mat44 matrix)
 
 inline int NiftiImage::fileVersion (const std::string &path)
 {
-    nifti_1_header *header = nifti_read_header(path.c_str(), NULL, false);
+    nifti_1_header *header = nifti_read_header(internal::stringToPath(path), NULL, false);
     if (header == NULL)
         return -1;
     else
@@ -780,7 +786,7 @@ inline NiftiImage::NiftiImage (const SEXP object, const bool readData, const boo
         else if (Rf_isString(object))
         {
             const std::string path = Rcpp::as<std::string>(object);
-            acquire(nifti_image_read(path.c_str(), readData));
+            acquire(nifti_image_read(internal::stringToPath(path), readData));
             if (this->image == NULL)
                 throw std::runtime_error("Failed to read image from path " + path);
         }
@@ -810,6 +816,19 @@ inline NiftiImage::NiftiImage (const SEXP object, const bool readData, const boo
 
 #endif // USING_R
 
+inline NiftiImage::NiftiImage (const std::string &path, const bool readData)
+    : image(NULL), refCount(NULL)
+{
+    acquire(nifti_image_read(internal::stringToPath(path), readData));
+    
+    if (image == NULL)
+        throw std::runtime_error("Failed to read image from path " + path);
+    
+#ifndef NDEBUG
+    Rc_printf("Creating NiftiImage with pointer %p (from string)\n", this->image);
+#endif
+}
+
 inline NiftiImage::NiftiImage (const std::string &path, const std::vector<int> &volumes)
     : image(NULL), refCount(NULL)
 {
@@ -817,7 +836,7 @@ inline NiftiImage::NiftiImage (const std::string &path, const std::vector<int> &
         throw std::runtime_error("The vector of volumes is empty");
     
     nifti_brick_list brickList;
-    acquire(nifti_image_read_bricks(path.c_str(), volumes.size(), &volumes[0], &brickList));
+    acquire(nifti_image_read_bricks(internal::stringToPath(path), volumes.size(), &volumes[0], &brickList));
     if (image == NULL)
         throw std::runtime_error("Failed to read image from path " + path);
     
@@ -1365,7 +1384,7 @@ inline NiftiImage & NiftiImage::replaceData (const NiftiImageData &data)
     return *this;
 }
 
-inline void NiftiImage::toFile (const std::string fileName, const int datatype) const
+inline std::pair<std::string,std::string> NiftiImage::toFile (const std::string fileName, const int datatype) const
 {
     const bool changingDatatype = (datatype != DT_NONE && !this->isNull() && datatype != image->datatype);
     
@@ -1375,15 +1394,17 @@ inline void NiftiImage::toFile (const std::string fileName, const int datatype) 
     if (changingDatatype)
         imageToWrite.changeDatatype(datatype, true);
     
-    const int status = nifti_set_filenames(imageToWrite, fileName.c_str(), false, true);
+    const int status = nifti_set_filenames(imageToWrite, internal::stringToPath(fileName), false, true);
     if (status != 0)
         throw std::runtime_error("Failed to set filenames for NIfTI object");
     nifti_image_write(imageToWrite);
+    
+    return std::pair<std::string,std::string>(std::string(imageToWrite->fname), std::string(imageToWrite->iname));
 }
 
-inline void NiftiImage::toFile (const std::string fileName, const std::string &datatype) const
+inline std::pair<std::string,std::string> NiftiImage::toFile (const std::string fileName, const std::string &datatype) const
 {
-    toFile(fileName, internal::stringToDatatype(datatype));
+    return toFile(fileName, internal::stringToDatatype(datatype));
 }
 
 #ifdef USING_R
