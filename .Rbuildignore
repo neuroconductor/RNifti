@@ -4,3 +4,5 @@
 ^\.covrignore$
 ^standalone$
 ^revdep$
+^DESCRIPTION\.bak$
+^\./\.travis\.yml\.bak$
