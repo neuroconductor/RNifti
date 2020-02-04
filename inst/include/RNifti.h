@@ -9,12 +9,12 @@
 // Defined since RNifti v0.10.0
 // Equal to 100 * (major version) + (minor version)
 // Does not change with patch level, since the API should not change
-#define RNIFTI_VERSION 11
+#define RNIFTI_VERSION 100
 
 #include "niftilib/nifti1_io.h"
 
 #ifdef __cplusplus
-#include "lib/NiftiImage.h"
+#include "RNifti/NiftiImage.h"
 
 // Defined since RNifti v0.3.0
 #define HAVE_RNIFTI_NAMESPACE

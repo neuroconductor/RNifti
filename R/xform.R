@@ -25,8 +25,8 @@
 #' image dimensions are known, which isn't the case when reorienting an xform
 #' alone.
 #' 
-#' @param image,x An image, in any acceptable form (see
-#'   \code{\link{retrieveNifti}}), or a 4x4 numeric xform matrix.
+#' @param image,x An image, in any acceptable form (see \code{\link{asNifti}}),
+#'   or a 4x4 numeric xform matrix.
 #' @param useQuaternionFirst A single logical value. If \code{TRUE}, the
 #'   ``qform'' matrix will be used first, if it is defined; otherwise the
 #'   ``sform'' matrix will take priority.
@@ -34,7 +34,8 @@
 #'   matrix has a \code{"code"} attribute, the appropriate qform or sform code
 #'   is also set.
 #' @return For \code{xform}, an affine matrix corresponding to the ``qform''
-#'   or ``sform'' information in the image header. For \code{orientation}, a
+#'   or ``sform'' information in the image header, with a \code{"code"}
+#'   attribute giving the corresponding xform code. For \code{orientation}, a
 #'   string with three characters indicating the (approximate) orientation of
 #'   the image. The replacement forms return the modified object.
 #' 

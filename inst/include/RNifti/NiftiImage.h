@@ -21,6 +21,7 @@
 #include <string>
 #include <sstream>
 #include <vector>
+#include <complex>
 #include <stdexcept>
 #include <algorithm>
 #include <map>
@@ -41,6 +42,25 @@
 **/
 
 namespace RNifti {
+
+typedef std::complex<float> complex64_t;
+typedef std::complex<double> complex128_t;
+
+/**
+ * Simple RGB(A) type encapsulating an 8-bit colour value with optional opacity, which can also be
+ * set or retrieved as a single 32-bit integer. The default value is equivalent to zero, a fully
+ * transparent black.
+ * @author Jon Clayden (<code@clayden.org>)
+**/
+struct rgba32_t
+{
+    union ValueType {
+        int packed;
+        unsigned char bytes[4];
+    };
+    ValueType value;
+    rgba32_t () { value.packed = 0; }
+};
 
 /**
  * Wrapper class encapsulating a NIfTI data blob, with responsibility for handling data scaling
@@ -64,26 +84,87 @@ protected:
         virtual ~TypeHandler() {}
         virtual size_t size () const { return 0; }
         virtual bool hasNaN () const { return false; }
-        virtual double getDouble (void *ptr) const = 0;
-        virtual int getInt (void *ptr) const = 0;
-        virtual void setDouble (void *ptr, const double value) const = 0;
-        virtual void setInt (void *ptr, const int value) const = 0;
-        virtual void minmax (void *ptr, const size_t length, double *min, double *max) const = 0;
+        virtual complex128_t getComplex (void *ptr) const { return complex128_t(0.0, 0.0); }
+        virtual double getDouble (void *ptr) const { return 0.0; }
+        virtual int getInt (void *ptr) const { return 0; }
+        virtual rgba32_t getRgb (void *ptr) const { return rgba32_t(); }
+        virtual void setComplex (void *ptr, const complex128_t value) const {}
+        virtual void setDouble (void *ptr, const double value) const {}
+        virtual void setInt (void *ptr, const int value) const {}
+        virtual void setRgb (void *ptr, const rgba32_t value) const {}
+        virtual void minmax (void *ptr, const size_t length, double *min, double *max) const { *min = 0.0; *max = 0.0; }
     };
     
     /**
      * Concrete inner class template defining behaviour specific to individual data types
     **/
-    template <typename Type>
+    template <typename Type, bool alpha = false>
     struct ConcreteTypeHandler : public TypeHandler
     {
         size_t size () const { return (sizeof(Type)); }
         bool hasNaN () const { return std::numeric_limits<Type>::has_quiet_NaN; }
+        complex128_t getComplex (void *ptr) const { return complex128_t(static_cast<double>(*static_cast<Type*>(ptr)), 0.0); }
         double getDouble (void *ptr) const { return static_cast<double>(*static_cast<Type*>(ptr)); }
         int getInt (void *ptr) const { return static_cast<int>(*static_cast<Type*>(ptr)); }
-        void setDouble (void *ptr, const double value) const { *(static_cast<Type*>(ptr)) = static_cast<Type>(value); }
-        void setInt (void *ptr, const int value) const { *(static_cast<Type*>(ptr)) = static_cast<Type>(value); }
+        void setComplex (void *ptr, const complex128_t value) const
+        {
+            *(static_cast<Type*>(ptr)) = Type(value.real());
+            *(static_cast<Type*>(ptr) + 1) = Type(0);
+        }
+        void setDouble (void *ptr, const double value) const { *(static_cast<Type*>(ptr)) = Type(value); }
+        void setInt (void *ptr, const int value) const { *(static_cast<Type*>(ptr)) = Type(value); }
         void minmax (void *ptr, const size_t length, double *min, double *max) const;
+    };
+    
+    template <typename ElementType>
+    struct ConcreteTypeHandler<std::complex<ElementType>,false> : public TypeHandler
+    {
+        size_t size () const { return (sizeof(ElementType) * 2); }
+        bool hasNaN () const { return std::numeric_limits<ElementType>::has_quiet_NaN; }
+        std::complex<ElementType> getNative (void *ptr) const
+        {
+            const ElementType real = *static_cast<ElementType*>(ptr);
+            const ElementType imag = *(static_cast<ElementType*>(ptr) + 1);
+            return std::complex<ElementType>(real, imag);
+        }
+        void setNative (void *ptr, const std::complex<ElementType> native) const
+        {
+            *(static_cast<ElementType*>(ptr)) = native.real();
+            *(static_cast<ElementType*>(ptr) + 1) = native.imag();
+        }
+        complex128_t getComplex (void *ptr) const { return complex128_t(getNative(ptr)); }
+        double getDouble (void *ptr) const { return static_cast<double>(getNative(ptr).real()); }
+        int getInt (void *ptr) const { return static_cast<int>(getNative(ptr).real()); }
+        void setComplex (void *ptr, const complex128_t value) const { setNative(ptr, std::complex<ElementType>(value)); }
+        void setDouble (void *ptr, const double value) const { setNative(ptr, std::complex<ElementType>(value, 0.0)); }
+        void setInt (void *ptr, const int value) const { setNative(ptr, std::complex<ElementType>(static_cast<ElementType>(value), 0.0)); }
+        void minmax (void *ptr, const size_t length, double *min, double *max) const;
+    };
+    
+    template <bool alpha>
+    struct ConcreteTypeHandler<rgba32_t,alpha> : public TypeHandler
+    {
+        size_t size () const { return alpha ? 4 : 3; }
+        int getInt (void *ptr) const { return getRgb(ptr).value.packed; }
+        rgba32_t getRgb (void *ptr) const
+        {
+            rgba32_t value;
+            unsigned char *source = static_cast<unsigned char *>(ptr);
+            std::copy(source, source + (alpha ? 4 : 3), value.value.bytes);
+            return value;
+        }
+        void setInt (void *ptr, const int value) const
+        {
+            rgba32_t native;
+            native.value.packed = value;
+            setRgb(ptr, native);
+        }
+        void setRgb (void *ptr, const rgba32_t value) const
+        {
+            unsigned char *target = static_cast<unsigned char *>(ptr);
+            std::copy(value.value.bytes, value.value.bytes + (alpha ? 4 : 3), target);
+        }
+        void minmax (void *ptr, const size_t length, double *min, double *max) const { *min = 0.0; *max = 255.0; }
     };
     
     /**
@@ -98,16 +179,20 @@ protected:
         
         switch (_datatype)
         {
-            case DT_UINT8:   return new ConcreteTypeHandler<uint8_t>();  break;
-            case DT_INT16:   return new ConcreteTypeHandler<int16_t>();  break;
-            case DT_INT32:   return new ConcreteTypeHandler<int32_t>();  break;
-            case DT_FLOAT32: return new ConcreteTypeHandler<float>();    break;
-            case DT_FLOAT64: return new ConcreteTypeHandler<double>();   break;
-            case DT_INT8:    return new ConcreteTypeHandler<int8_t>();   break;
-            case DT_UINT16:  return new ConcreteTypeHandler<uint16_t>(); break;
-            case DT_UINT32:  return new ConcreteTypeHandler<uint32_t>(); break;
-            case DT_INT64:   return new ConcreteTypeHandler<int64_t>();  break;
-            case DT_UINT64:  return new ConcreteTypeHandler<uint64_t>(); break;
+            case DT_UINT8:      return new ConcreteTypeHandler<uint8_t>();          break;
+            case DT_INT16:      return new ConcreteTypeHandler<int16_t>();          break;
+            case DT_INT32:      return new ConcreteTypeHandler<int32_t>();          break;
+            case DT_FLOAT32:    return new ConcreteTypeHandler<float>();            break;
+            case DT_FLOAT64:    return new ConcreteTypeHandler<double>();           break;
+            case DT_INT8:       return new ConcreteTypeHandler<int8_t>();           break;
+            case DT_UINT16:     return new ConcreteTypeHandler<uint16_t>();         break;
+            case DT_UINT32:     return new ConcreteTypeHandler<uint32_t>();         break;
+            case DT_INT64:      return new ConcreteTypeHandler<int64_t>();          break;
+            case DT_UINT64:     return new ConcreteTypeHandler<uint64_t>();         break;
+            case DT_COMPLEX64:  return new ConcreteTypeHandler<complex64_t>();      break;
+            case DT_COMPLEX128: return new ConcreteTypeHandler<complex128_t>();     break;
+            case DT_RGB24:      return new ConcreteTypeHandler<rgba32_t,false>();   break;
+            case DT_RGBA32:     return new ConcreteTypeHandler<rgba32_t,true>();    break;
             
             default:
             throw std::runtime_error("Unsupported data type (" + std::string(nifti_datatype_string(_datatype)) + ")");
@@ -217,7 +302,7 @@ public:
         Element & operator= (const Element &other);
         
         /**
-         * Implicit type-cast operator, suitable for implicit conversion to basic numeric types
+         * Type-cast operator, suitable for implicit conversion to basic numeric types
         **/
         template <typename TargetType>
         operator TargetType() const
@@ -228,6 +313,37 @@ public:
                 return TargetType(parent.handler->getInt(ptr));
             else
                 return TargetType(parent.handler->getDouble(ptr));
+        }
+        
+        template <typename ElementType>
+        operator std::complex<ElementType>() const
+        {
+            if (parent.isScaled())
+                return std::complex<ElementType>(parent.handler->getComplex(ptr) * parent.slope + complex128_t(parent.intercept, parent.intercept));
+            else
+                return std::complex<ElementType>(parent.handler->getComplex(ptr));
+        }
+        
+#ifdef USING_R
+        /**
+         * \c Rcomplex type-cast operator, allowing data to be copied straight to a CPLXSXP
+        **/
+        operator Rcomplex() const
+        {
+            const complex128_t value = parent.handler->getComplex(ptr);
+            Rcomplex rValue = { value.real(), value.imag() };
+            if (parent.isScaled())
+            {
+                rValue.r = rValue.r * parent.slope + parent.intercept;
+                rValue.i = rValue.i * parent.slope + parent.intercept;
+            }
+            return rValue;
+        }
+#endif
+        
+        operator rgba32_t() const
+        {
+            return parent.handler->getRgb(ptr);
         }
     };
     
@@ -415,9 +531,9 @@ public:
     
     /**
      * Determine whether the datatype is complex
-     * @return Currently \c false, always
+     * @return \c true if the data represents complex floating point values; \c false otherwise
     **/
-    bool isComplex () const          { return false; }
+    bool isComplex () const          { return (_datatype == DT_COMPLEX64 || _datatype == DT_COMPLEX128); }
     
     /**
      * Determine whether the datatype is floating point
@@ -433,10 +549,10 @@ public:
     bool isInteger () const          { return nifti_is_inttype(_datatype); }
     
     /**
-     * Determine whether the datatype corresponds to an RGB value
-     * @return Currently \c false, always
+     * Determine whether the datatype corresponds to an RGB type
+     * @return \c true if the data represents RGB colour values; \c false otherwise
     **/
-    bool isRgb () const              { return false; }
+    bool isRgb () const              { return (_datatype == DT_RGB24 || _datatype == DT_RGBA32); }
     
     /**
      * Return a similar object to the callee, but with the slope and intercept values reset
@@ -496,6 +612,7 @@ public:
 };
 
 
+// R provides an NaN (NA) value for integers
 #ifdef USING_R
 template <>
 inline bool NiftiImageData::ConcreteTypeHandler<int>::hasNaN () const { return true; }
@@ -603,6 +720,8 @@ public:
             return DT_INT32;
         else if (sexpType == REALSXP)
             return DT_FLOAT64;
+        else if (sexpType == CPLXSXP)
+            return DT_COMPLEX128;
         else
             throw std::runtime_error("Array elements must be numeric");
     }
@@ -708,6 +827,13 @@ protected:
     void initFromArray (const Rcpp::RObject &object, const bool copyData = true);
    
 #endif
+    
+    /**
+     * Initialise an empty object from basic metadata
+     * @param dim A vector of image dimensions
+     * @param datatype A datatype code for the image data
+    **/
+    void initFromDims (const std::vector<int> &dim, const int datatype);
 
     /**
      * Modify the pixel dimensions, and potentially the xform matrices to match
@@ -778,21 +904,26 @@ public:
     }
     
     /**
+     * Initialise from basic metadata, allocating and zeroing pixel data
+     * @param dim A vector of image dimensions
+     * @param datatype A datatype code for the image data
+    **/
+    NiftiImage (const std::vector<int> &dim, const int datatype);
+    
+    /**
+     * Initialise from basic metadata, allocating and zeroing pixel data
+     * @param dim A vector of image dimensions
+     * @param datatype A datatype string for the image data
+    **/
+    NiftiImage (const std::vector<int> &dim, const std::string &datatype);
+    
+    /**
      * Initialise using a path string
      * @param path A string specifying a path to a valid NIfTI-1 file, possibly gzipped
      * @param readData If \c true, the data will be read as well as the metadata
      * @exception runtime_error If reading from the file fails
     **/
-    NiftiImage (const std::string &path, const bool readData = true)
-        : image(NULL), refCount(NULL)
-    {
-        acquire(nifti_image_read(path.c_str(), readData));
-        if (image == NULL)
-            throw std::runtime_error("Failed to read image from path " + path);
-#ifndef NDEBUG
-        Rc_printf("Creating NiftiImage with pointer %p (from string)\n", this->image);
-#endif
-    }
+    NiftiImage (const std::string &path, const bool readData = true);
     
     /**
      * Initialise using a path string and sequence of required volumes
@@ -1059,7 +1190,7 @@ public:
 #ifdef USING_R
     /**
      * Update the image from an R array
-     * @param array An R array or list object
+     * @param object An R array or list object
      * @return Self, after updating data and/or metadata
     **/
     NiftiImage & update (const Rcpp::RObject &object);
@@ -1076,13 +1207,7 @@ public:
      * Return the number of blocks in the image
      * @return An integer giving the number of blocks in the image
     **/
-    int nBlocks () const
-    {
-        if (image == NULL)
-            return 0;
-        else
-            return image->dim[image->ndim];
-    }
+    int nBlocks () const { return (image == NULL ? 0 : image->dim[image->ndim]); }
     
     /**
      * Extract a block from the image
@@ -1131,18 +1256,47 @@ public:
     Block volume (const int i) { return Block(*this, 4, i); }
     
     /**
+     * Return the number of colour channels used by the image
+     * @return An integer giving the number of channels: generally 1, exception for RGB datatypes,
+     * which have 3 or 4, or the empty datatype, which has 0. Also 0 for null images
+    **/
+    int nChannels () const
+    {
+        if (image == NULL)
+            return 0;
+        else
+        {
+            switch (image->datatype)
+            {
+                case DT_NONE:   return 0;
+                case DT_RGB24:  return 3;
+                case DT_RGBA32: return 4;
+                default:        return 1;
+            }
+        }
+    }
+    
+    /**
+     * Return the number of voxels in the image
+     * @return An integer giving the number of voxels in the image
+    **/
+    size_t nVoxels () const { return (image == NULL ? 0 : image->nvox); }
+    
+    /**
      * Write the image to a NIfTI-1 file
      * @param fileName The file name to write to, with appropriate suffix (e.g. ".nii.gz")
      * @param datatype The datatype to use when writing the file
+     * @return A pair of strings, giving the final header and image paths in that order
     **/
-    void toFile (const std::string fileName, const int datatype = DT_NONE) const;
+    std::pair<std::string,std::string> toFile (const std::string fileName, const int datatype = DT_NONE) const;
     
     /**
      * Write the image to a NIfTI-1 file
      * @param fileName The file name to write to, with appropriate suffix (e.g. ".nii.gz")
      * @param datatype The datatype to use when writing the file, or "auto"
+     * @return A pair of strings, giving the final header and image paths in that order
     **/
-    void toFile (const std::string fileName, const std::string &datatype) const;
+    std::pair<std::string,std::string> toFile (const std::string fileName, const std::string &datatype) const;
     
 #ifdef USING_R
     
@@ -1178,7 +1332,7 @@ public:
 };
 
 // Include implementations
-#include "lib/NiftiImage_impl.h"
+#include "RNifti/NiftiImage_impl.h"
 
 } // main namespace
 

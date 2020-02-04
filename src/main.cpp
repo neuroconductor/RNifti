@@ -2,7 +2,7 @@
 #include <Rcpp.h>
 
 #include "niftilib/nifti1_io.h"
-#include "lib/NiftiImage.h"
+#include "RNifti/NiftiImage.h"
 
 using namespace Rcpp;
 using namespace RNifti;
@@ -45,11 +45,129 @@ NumericMatrix xformToMatrix (const ::mat44 xform)
     return matrix;
 }
 
-RcppExport SEXP asNifti (SEXP _object)
+inline unsigned char clip (const double &value)
+{
+    unsigned char result;
+    if (value < 0.0)
+        result = 0;
+    else if (value > 1.0)
+        result = 255;
+    else
+        result = RNifti::internal::roundEven(value * 255.0);
+    return result;
+}
+
+RcppExport SEXP packRgb (SEXP _object, SEXP _channels, SEXP _maxValue)
+{
+BEGIN_RCPP
+    const size_t length = size_t(Rf_length(_object));
+    const int channels = as<int>(_channels);
+    const size_t pixels = length / size_t(channels);
+    const double maxValue = as<double>(_maxValue);
+    
+    if (pixels * channels != length)
+    {
+        std::ostringstream message;
+        message << "Data length (" << length << ") is not a multiple of the number of channels (" << channels << ")";
+        Rf_error(message.str().c_str());
+    }
+    
+    NumericVector source(_object);
+    IntegerVector result(pixels);
+    rgba32_t rgba;
+    for (size_t i=0; i<pixels; i++)
+    {
+        if (channels > 2)
+        {
+            for (int j=0; j<channels; j++)
+                rgba.value.bytes[j] = clip(source[i + pixels*j] / maxValue);
+            for (int j=channels; j<4; j++)
+                rgba.value.bytes[j] = 0;
+        }
+        else
+        {
+            for (int j=0; j<3; j++)
+                rgba.value.bytes[j] = clip(source[i] / maxValue);
+            rgba.value.bytes[3] = clip(source[i + pixels] / maxValue);
+        }
+        result[i] = rgba.value.packed;
+    }
+    
+    return result;
+END_RCPP
+}
+
+RcppExport SEXP rgbToStrings (SEXP _object)
 {
 BEGIN_RCPP
     const NiftiImage image(_object, true, true);
-    return image.toPointer("NIfTI image");
+    const NiftiImageData data = image.data();
+    CharacterVector result(image.nVoxels());
+    for (size_t i=0; i<image.nVoxels(); i++)
+    {
+        rgba32_t rgba;
+        rgba.value.packed = int(data[i]);
+        std::ostringstream value;
+        value << "#" << std::hex << std::uppercase;
+        for (int j=0; j<image.nChannels(); j++)
+            value << std::setw(2) << std::setfill('0') << int(rgba.value.bytes[j]);
+        result[i] = value.str();
+    }
+    return result;
+END_RCPP
+}
+
+RcppExport SEXP unpackRgb (SEXP _object, SEXP _channels)
+{
+BEGIN_RCPP
+    const NiftiImage image(_object, true, true);
+    const NiftiImageData data = image.data();
+    const int_vector channels = as<int_vector>(_channels);
+    int_vector dim = image.dim();
+    dim.push_back(channels.size());
+    
+    const size_t len = image.nVoxels();
+    RawVector result(len * channels.size());
+    rgba32_t rgba;
+    for (size_t i=0; i<len; i++)
+    {
+        rgba.value.packed = int(data[i]);
+        for (int j=0; j<channels.size(); j++)
+        {
+            const int channel = channels[j] - 1;
+            result[i + len * j] = int(rgba.value.bytes[channel]);
+        }
+    }
+    result.attr("dim") = dim;
+    return result;
+END_RCPP
+}
+
+RcppExport SEXP asNifti (SEXP _image, SEXP _reference, SEXP _datatype, SEXP _internal)
+{
+BEGIN_RCPP
+    const std::string datatype = as<std::string>(_datatype);
+    const bool willChangeDatatype = (datatype != "auto");
+    const int internal = as<int>(_internal);
+    const bool usePointer = (internal == 1 || (internal == NA_LOGICAL && Rf_inherits(_image,"internalImage")) || willChangeDatatype);
+    
+    NiftiImage image;
+    if (Rf_isVectorList(_reference) && Rf_length(_reference) < 36)
+    {
+        image = NiftiImage(_image);
+        image.update(_reference);
+    }
+    else if (Rf_isNull(_reference))
+        image = NiftiImage(_image);
+    else
+    {
+        image = NiftiImage(_reference);
+        image.update(_image);
+    }
+    
+    if (willChangeDatatype)
+        image.changeDatatype(datatype);
+    return image.toArrayOrPointer(usePointer, "NIfTI image");
 END_RCPP
 }
 
@@ -85,76 +203,8 @@ RcppExport SEXP writeNifti (SEXP _image, SEXP _file, SEXP _datatype)
 {
 BEGIN_RCPP
     const NiftiImage image(_image, true, true);
-    image.toFile(as<std::string>(_file), as<std::string>(_datatype));
-    return R_NilValue;
-END_RCPP
-}
-
-RcppExport SEXP writeNiftiRgb (SEXP _red, SEXP _green, SEXP _blue, SEXP _file, SEXP _reference)
-{
-BEGIN_RCPP
-    const NiftiImage reference(_reference, false, true);
-    NiftiImage image = reference;
-    NumericVector red(_red);
-    NumericVector green(_green);
-    NumericVector blue(_blue);
-    
-    image->datatype = DT_RGB24;
-    nifti_datatype_sizes(DT_RGB24, &image->nbyper, &image->swapsize);
-    
-    unsigned char *data = (unsigned char *) calloc(image->nvox, 3);
-    for (size_t i=0; i<image->nvox; i++)
-    {
-        data[3*i] = static_cast<unsigned char>(red[i] * 255.0);
-        data[3*i+1] = static_cast<unsigned char>(green[i] * 255.0);
-        data[3*i+2] = static_cast<unsigned char>(blue[i] * 255.0);
-    }
-    
-    image->data = (void *) data;
-    image->scl_slope = 0.0;
-    image->scl_inter = 0.0;
-    image->cal_min = 0.0;
-    image->cal_max = 0.0;
-    
-    image.toFile(as<std::string>(_file));
-    return R_NilValue;
-END_RCPP
-}
-
-RcppExport SEXP updateNifti (SEXP _image, SEXP _reference, SEXP _datatype)
-{
-BEGIN_RCPP
-    const std::string datatype = as<std::string>(_datatype);
-    const bool willChangeDatatype = (datatype != "auto");
-    
-    if (Rf_isVectorList(_reference) && Rf_length(_reference) < 36)
-    {
-        NiftiImage image(_image);
-        image.update(_reference);
-        if (willChangeDatatype)
-            image.changeDatatype(datatype);
-        return image.toArrayOrPointer(willChangeDatatype, "NIfTI image");
-    }
-    else
-    {
-        const NiftiImage reference(_reference, true, true);
-        if (reference.isNull() && willChangeDatatype)
-        {
-            NiftiImage image(_image);
-            image.changeDatatype(datatype);
-            return image.toPointer("NIfTI image");
-        }
-        else if (reference.isNull() && !willChangeDatatype)
-            return _image;
-        else
-        {
-            NiftiImage image = reference;
-            image.update(_image);
-            if (willChangeDatatype)
-                image.changeDatatype(datatype);
-            return image.toArrayOrPointer(willChangeDatatype, "NIfTI image");
-        }
-    }
+    const std::pair<std::string,std::string> paths = image.toFile(as<std::string>(_file), as<std::string>(_datatype));
+    return CharacterVector::create(Named("header")=paths.first, Named("image")=paths.second);
 END_RCPP
 }
 
@@ -248,8 +298,14 @@ BEGIN_RCPP
     else
     {
         const NiftiImage image(_image, false, true);
-        ::mat44 xform = image.xform(as<bool>(_preferQuaternion));
-        return xformToMatrix(xform);
+        const bool preferQuaternion = as<bool>(_preferQuaternion);
+        ::mat44 xform = image.xform(preferQuaternion);
+        NumericMatrix matrix = xformToMatrix(xform);
+        if (image.isNull())
+            matrix.attr("code") = 0;
+        else
+            matrix.attr("code") = ((preferQuaternion && image->qform_code > 0) || image->sform_code <= 0) ? image->qform_code : image->sform_code;
+        return matrix;
     }
 END_RCPP
 }
@@ -449,7 +505,15 @@ BEGIN_RCPP
     {
         const IntegerVector indices(_indices);
         const NiftiImageData data = image.data();
-        if (data.isFloatingPoint() || data.isScaled())
+        if (data.isComplex())
+        {
+            ComplexVector result(indices.length());
+            const Rcomplex naValue = { NA_REAL, NA_REAL };
+            for (int i=0; i<indices.length(); i++)
+                result[i] = (size_t(indices[i]) > data.size() ? naValue : data[indices[i] - 1]);
+            return result;
+        }
+        else if (data.isFloatingPoint() || data.isScaled())
         {
             NumericVector result(indices.length());
             for (int i=0; i<indices.length(); i++)
@@ -495,7 +559,20 @@ BEGIN_RCPP
         }
         
         const NiftiImageData data = image.data();
-        if (data.isFloatingPoint() || data.isScaled())
+        if (data.isComplex())
+        {
+            ComplexVector result(count);
+            const Rcomplex naValue = { NA_REAL, NA_REAL };
+            for (size_t j=0; j<count; j++)
+            {
+                size_t loc = 0;
+                for (int i=0; i<nDims; i++)
+                    loc += (locs[i][(j / cumulativeSizes[i]) % sizes[i]] - 1) * strides[i];
+                result[j] = (loc >= data.size() ? naValue : data[loc]);
+            }
+            return result;
+        }
+        else if (data.isFloatingPoint() || data.isScaled())
         {
             NumericVector result(count);
             for (size_t j=0; j<count; j++)
@@ -543,12 +620,13 @@ END_RCPP
 extern "C" {
 
 static R_CallMethodDef callMethods[] = {
-    { "asNifti",        (DL_FUNC) &asNifti,         1 },
+    { "packRgb",        (DL_FUNC) &packRgb,         3 },
+    { "rgbToStrings",   (DL_FUNC) &rgbToStrings,    1 },
+    { "unpackRgb",      (DL_FUNC) &unpackRgb,       2 },
+    { "asNifti",        (DL_FUNC) &asNifti,         4 },
     { "niftiVersion",   (DL_FUNC) &niftiVersion,    1 },
     { "readNifti",      (DL_FUNC) &readNifti,       3 },
     { "writeNifti",     (DL_FUNC) &writeNifti,      3 },
-    { "writeNiftiRgb",  (DL_FUNC) &writeNiftiRgb,   5 },
-    { "updateNifti",    (DL_FUNC) &updateNifti,     3 },
     { "niftiHeader",    (DL_FUNC) &niftiHeader,     1 },
     { "analyzeHeader",  (DL_FUNC) &analyzeHeader,   1 },
     { "getXform",       (DL_FUNC) &getXform,        2 },

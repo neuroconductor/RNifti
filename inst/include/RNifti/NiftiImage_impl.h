@@ -52,6 +52,9 @@ inline bool isNaN<double> (const double x) { return bool(ISNAN(x)); }
 // For R specifically, we have to catch NA_INTEGER (a.k.a. INT_MIN)
 template <>
 inline bool isNaN<int> (const int x) { return (x == NA_INTEGER); }
+
+template <>
+inline bool isNaN<rgba32_t> (const rgba32_t x) { return (x.value.packed == NA_INTEGER); }
 #endif
 
 template <typename Type>
@@ -99,6 +102,13 @@ inline int stringToDatatype (const std::string &datatype)
         datatypeCodes["uint32"] = DT_UINT32;
         datatypeCodes["int64"] = DT_INT64;
         datatypeCodes["uint64"] = DT_UINT64;
+        datatypeCodes["complex64"] = DT_COMPLEX64;
+        datatypeCodes["complex128"] = DT_COMPLEX128;
+        datatypeCodes["complex"] = DT_COMPLEX128;
+        datatypeCodes["rgb24"] = DT_RGB24;
+        datatypeCodes["rgb"] = DT_RGB24;
+        datatypeCodes["rgba32"] = DT_RGBA32;
+        datatypeCodes["rgba"] = DT_RGBA32;
     }
     
     std::locale locale;
@@ -116,6 +126,12 @@ inline int stringToDatatype (const std::string &datatype)
     else
         return datatypeCodes[lowerCaseDatatype];
 }
+
+#ifdef USING_R
+inline const char * stringToPath (const std::string &str) { return R_ExpandFileName(str.c_str()); }
+#else
+inline const char * stringToPath (const std::string &str) { return str.c_str(); }
+#endif
 
 #ifdef USING_R
 
@@ -254,7 +270,7 @@ inline void updateHeader (nifti_1_header *header, const Rcpp::List &list, const 
         strcpy(header->magic, Rcpp::as<std::string>(list["magic"]).substr(0,3).c_str());
 }
 
-inline void addAttributes (const SEXP pointer, const NiftiImage &source, const bool realDim = true, const bool includeXptr = true)
+inline void addAttributes (const SEXP pointer, const NiftiImage &source, const bool realDim = true, const bool includeXptr = true, const bool keepData = true)
 {
     const int nDims = source->dim[0];
     Rcpp::RObject object(pointer);
@@ -282,7 +298,10 @@ inline void addAttributes (const SEXP pointer, const NiftiImage &source, const b
     
     if (includeXptr)
     {
-        Rcpp::XPtr<NiftiImage> xptr(new NiftiImage(source,false));
+        NiftiImage *imagePtr = new NiftiImage(source, false);
+        if (!keepData)
+            imagePtr->dropData();
+        Rcpp::XPtr<NiftiImage> xptr(imagePtr);
         object.attr(".nifti_image_ptr") = xptr;
     }
 }
@@ -291,8 +310,8 @@ inline void addAttributes (const SEXP pointer, const NiftiImage &source, const b
 
 }       // internal namespace
 
-template <typename Type>
-inline void NiftiImageData::ConcreteTypeHandler<Type>::minmax (void *ptr, const size_t length, double *min, double *max) const
+template <typename Type, bool alpha>
+inline void NiftiImageData::ConcreteTypeHandler<Type,alpha>::minmax (void *ptr, const size_t length, double *min, double *max) const
 {
     if (ptr == NULL || length < 1)
     {
@@ -304,6 +323,31 @@ inline void NiftiImageData::ConcreteTypeHandler<Type>::minmax (void *ptr, const 
         Type *loc = static_cast<Type*>(ptr);
         Type currentMin = *loc, currentMax = *loc;
         for (size_t i=1; i<length; i++)
+        {
+            loc++;
+            if (internal::lessThan(*loc, currentMin))
+                currentMin = *loc;
+            if (internal::lessThan(currentMax, *loc))
+                currentMax = *loc;
+        }
+        *min = static_cast<double>(currentMin);
+        *max = static_cast<double>(currentMax);
+    }
+}
+
+template <typename ElementType>
+inline void NiftiImageData::ConcreteTypeHandler<std::complex<ElementType>,false>::minmax (void *ptr, const size_t length, double *min, double *max) const
+{
+    if (ptr == NULL || length < 1)
+    {
+        *min = static_cast<double>(std::numeric_limits<ElementType>::min());
+        *max = static_cast<double>(std::numeric_limits<ElementType>::max());
+    }
+    else
+    {
+        ElementType *loc = static_cast<ElementType*>(ptr);
+        ElementType currentMin = *loc, currentMax = *loc;
+        for (size_t i=1; i<(2*length); i++)
         {
             loc++;
             if (internal::lessThan(*loc, currentMin))
@@ -402,7 +446,7 @@ inline std::string NiftiImage::xformToString (const mat44 matrix)
 
 inline int NiftiImage::fileVersion (const std::string &path)
 {
-    nifti_1_header *header = nifti_read_header(path.c_str(), NULL, false);
+    nifti_1_header *header = nifti_read_header(internal::stringToPath(path), NULL, false);
     if (header == NULL)
         return -1;
     else
@@ -587,10 +631,11 @@ inline void NiftiImage::initFromNiftiS4 (const Rcpp::RObject &object, const bool
         header.srow_z[i] = srow_z[i];
     }
     
+    // Ignoring complex and RGB types here because oro.nifti doesn't yet support them
     if (header.datatype == DT_UINT8 || header.datatype == DT_INT16 || header.datatype == DT_INT32 || header.datatype == DT_INT8 || header.datatype == DT_UINT16 || header.datatype == DT_UINT32)
         header.datatype = DT_INT32;
     else if (header.datatype == DT_FLOAT32 || header.datatype == DT_FLOAT64)
-        header.datatype = DT_FLOAT64;  // This assumes that sizeof(double) == 8
+        header.datatype = DT_FLOAT64;
     else
         throw std::runtime_error("Data type is not supported");
     
@@ -717,14 +762,26 @@ inline void NiftiImage::initFromArray (const Rcpp::RObject &object, const bool c
     for (int i=0; i<nDims; i++)
         dims[i+1] = dimVector[i];
     
-    const int datatype = sexpTypeToNiftiType(object.sexp_type());
+    int datatype = sexpTypeToNiftiType(object.sexp_type());
+    if (object.inherits("rgbArray"))
+    {
+        const int channels = (object.hasAttribute("channels") ? object.attr("channels") : 3);
+        datatype = (channels == 4 ? DT_RGBA32 : DT_RGB24);
+    }
     acquire(nifti_make_new_nim(dims, datatype, int(copyData)));
     
     if (copyData)
     {
         const size_t dataSize = nifti_get_volsize(image);
-        if (datatype == DT_INT32)
+        if (datatype == DT_INT32 || datatype == DT_RGBA32)
             memcpy(this->image->data, INTEGER(object), dataSize);
+        else if (datatype == DT_RGB24)
+        {
+            NiftiImageData data(image);
+            std::copy(INTEGER(object), INTEGER(object)+image->nvox, data.begin());
+        }
+        else if (datatype == DT_COMPLEX128)
+            memcpy(this->image->data, COMPLEX(object), dataSize);
         else
             memcpy(this->image->data, REAL(object), dataSize);
     }
@@ -744,6 +801,17 @@ inline void NiftiImage::initFromArray (const Rcpp::RObject &object, const bool c
         const std::vector<std::string> pixunitsVector = object.attr("pixunits");
         setPixunits(pixunitsVector);
     }
+}
+
+inline void NiftiImage::initFromDims (const std::vector<int> &dim, const int datatype)
+{
+    const int nDims = std::min(7, int(dim.size()));
+    int dims[8] = { nDims, 0, 0, 0, 0, 0, 0, 0 };
+    std::copy(dim.begin(), dim.begin() + nDims, &dims[1]);
+    acquire(nifti_make_new_nim(dims, datatype, 1));
+    
+    if (image == NULL)
+        throw std::runtime_error("Failed to create image from scratch");
 }
 
 inline NiftiImage::NiftiImage (const SEXP object, const bool readData, const bool readOnly)
@@ -780,7 +848,7 @@ inline NiftiImage::NiftiImage (const SEXP object, const bool readData, const boo
         else if (Rf_isString(object))
         {
             const std::string path = Rcpp::as<std::string>(object);
-            acquire(nifti_image_read(path.c_str(), readData));
+            acquire(nifti_image_read(internal::stringToPath(path), readData));
             if (this->image == NULL)
                 throw std::runtime_error("Failed to read image from path " + path);
         }
@@ -810,6 +878,37 @@ inline NiftiImage::NiftiImage (const SEXP object, const bool readData, const boo
 
 #endif // USING_R
 
+inline NiftiImage::NiftiImage (const std::vector<int> &dim, const int datatype)
+    : image(NULL), refCount(NULL)
+{
+    initFromDims(dim, datatype);
+#ifndef NDEBUG
+    Rc_printf("Creating NiftiImage with pointer %p (from dims)\n", this->image);
+#endif
+}
+
+inline NiftiImage::NiftiImage (const std::vector<int> &dim, const std::string &datatype)
+    : image(NULL), refCount(NULL)
+{
+    initFromDims(dim, internal::stringToDatatype(datatype));
+#ifndef NDEBUG
+    Rc_printf("Creating NiftiImage with pointer %p (from dims)\n", this->image);
+#endif
+}
+
+inline NiftiImage::NiftiImage (const std::string &path, const bool readData)
+    : image(NULL), refCount(NULL)
+{
+    acquire(nifti_image_read(internal::stringToPath(path), readData));
+    
+    if (image == NULL)
+        throw std::runtime_error("Failed to read image from path " + path);
+    
+#ifndef NDEBUG
+    Rc_printf("Creating NiftiImage with pointer %p (from string)\n", this->image);
+#endif
+}
+
 inline NiftiImage::NiftiImage (const std::string &path, const std::vector<int> &volumes)
     : image(NULL), refCount(NULL)
 {
@@ -817,7 +916,7 @@ inline NiftiImage::NiftiImage (const std::string &path, const std::vector<int> &
         throw std::runtime_error("The vector of volumes is empty");
     
     nifti_brick_list brickList;
-    acquire(nifti_image_read_bricks(path.c_str(), volumes.size(), &volumes[0], &brickList));
+    acquire(nifti_image_read_bricks(internal::stringToPath(path), volumes.size(), &volumes[0], &brickList));
     if (image == NULL)
         throw std::runtime_error("Failed to read image from path " + path);
     
@@ -853,7 +952,7 @@ inline void NiftiImage::updatePixdim (const std::vector<float> &pixdim)
             {
                 if (i != j)
                     scaleMatrix.m[i][j] = 0.0;
-                else if (i >= nDims)
+                else if (i >= pixdimLength)
                     scaleMatrix.m[i][j] = 1.0;
                 else
                     scaleMatrix.m[i][j] = pixdim[i] / origPixdim[i];
@@ -1113,6 +1212,22 @@ inline NiftiImage & NiftiImage::reorient (const int icode, const int jcode, cons
             volStart += volSize;
         }
         
+        // Vector data needs to be reoriented to match the xform
+        if (image->intent_code == NIFTI_INTENT_VECTOR && image->dim[5] == 3)
+        {
+            internal::vec3 oldVec;
+            const size_t supervolSize = volSize * image->nt;
+            NiftiImageData::Iterator it = newData.begin();
+            for (size_t i=0; i<supervolSize; i++, ++it)
+            {
+                for (int j=0; j<3; j++)
+                    oldVec.v[j] = double(*(it + j*supervolSize));
+                const internal::vec3 newVec = internal::matrixVectorProduct(transform, oldVec);
+                for (int j=0; j<3; j++)
+                    *(it + j*supervolSize) = newVec.v[j];
+            }
+        }
+        
         // Replace the existing data in the image
         this->replaceData(newData);
     }
@@ -1220,14 +1335,23 @@ inline NiftiImage & NiftiImage::update (const Rcpp::RObject &object)
         image->dim[0] = image->ndim = nDims;
     
         image->datatype = NiftiImage::sexpTypeToNiftiType(object.sexp_type());
+        if (object.inherits("rgbArray"))
+        {
+            const int channels = object.attr("channels");
+            image->datatype = (channels == 4 ? DT_RGBA32 : DT_RGB24);
+        }
         nifti_datatype_sizes(image->datatype, &image->nbyper, NULL);
     
         nifti_image_unload(image);
     
         const size_t dataSize = nifti_get_volsize(image);
         image->data = calloc(1, dataSize);
-        if (image->datatype == DT_INT32)
+        if (image->datatype == DT_INT32 || image->datatype == DT_RGBA32)
             memcpy(image->data, INTEGER(object), dataSize);
+        else if (image->datatype == DT_RGB24)
+            std::copy(INTEGER(object), INTEGER(object)+image->nvox, this->data().begin());
+        else if (image->datatype == DT_COMPLEX128)
+            memcpy(image->data, COMPLEX(object), dataSize);
         else
             memcpy(image->data, REAL(object), dataSize);
     
@@ -1365,7 +1489,7 @@ inline NiftiImage & NiftiImage::replaceData (const NiftiImageData &data)
     return *this;
 }
 
-inline void NiftiImage::toFile (const std::string fileName, const int datatype) const
+inline std::pair<std::string,std::string> NiftiImage::toFile (const std::string fileName, const int datatype) const
 {
     const bool changingDatatype = (datatype != DT_NONE && !this->isNull() && datatype != image->datatype);
     
@@ -1375,15 +1499,17 @@ inline void NiftiImage::toFile (const std::string fileName, const int datatype) 
     if (changingDatatype)
         imageToWrite.changeDatatype(datatype, true);
     
-    const int status = nifti_set_filenames(imageToWrite, fileName.c_str(), false, true);
+    const int status = nifti_set_filenames(imageToWrite, internal::stringToPath(fileName), false, true);
     if (status != 0)
         throw std::runtime_error("Failed to set filenames for NIfTI object");
     nifti_image_write(imageToWrite);
+    
+    return std::pair<std::string,std::string>(std::string(imageToWrite->fname), std::string(imageToWrite->iname));
 }
 
-inline void NiftiImage::toFile (const std::string fileName, const std::string &datatype) const
+inline std::pair<std::string,std::string> NiftiImage::toFile (const std::string fileName, const std::string &datatype) const
 {
-    toFile(fileName, internal::stringToDatatype(datatype));
+    return toFile(fileName, internal::stringToDatatype(datatype));
 }
 
 #ifdef USING_R
@@ -1402,13 +1528,21 @@ inline Rcpp::RObject NiftiImage::toArray () const
             Rf_warning("Internal image contains no data - filling array with NAs");
             array = Rcpp::LogicalVector(image->nvox, NA_LOGICAL);
         }
+        else if (data.isComplex())
+            array = Rcpp::ComplexVector(data.begin(), data.end());
         else if (data.isFloatingPoint() || data.isScaled())
             array = Rcpp::NumericVector(data.begin(), data.end());
         else
             array = Rcpp::IntegerVector(data.begin(), data.end());
     
-        internal::addAttributes(array, *this);
-        array.attr("class") = Rcpp::CharacterVector::create("niftiImage", "array");
+        internal::addAttributes(array, *this, true, true, false);
+        if (data.isRgb())
+        {
+            array.attr("class") = Rcpp::CharacterVector::create("niftiImage", "rgbArray", "array");
+            array.attr("channels") = (data.datatype() == DT_RGBA32 ? 4 : 3);
+        }
+        else
+            array.attr("class") = Rcpp::CharacterVector::create("niftiImage", "array");
         return array;
     }
 }
@@ -1482,8 +1616,16 @@ inline Rcpp::RObject NiftiImage::headerToList () const
     result["intent_name"] = std::string(header.intent_name, 16);
     result["magic"] = std::string(header.magic, 4);
     
+    Rcpp::List strings;
+    strings["datatype"] = nifti_datatype_string(header.datatype);
+    strings["intent_code"] = nifti_intent_string(header.intent_code);
+    strings["qform_code"] = nifti_xform_string(header.qform_code);
+    strings["sform_code"] = nifti_xform_string(header.sform_code);
+    strings["slice_code"] = nifti_slice_string(header.slice_code);
+    
     internal::addAttributes(result, *this, false, false);
     result.attr("class") = Rcpp::CharacterVector::create("niftiHeader");
+    result.attr("strings") = strings;
     
     return result;
 }

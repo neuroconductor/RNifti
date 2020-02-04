@@ -42,9 +42,9 @@ readNifti <- function (file, internal = FALSE, volumes = NULL)
     if (length(file) == 0)
         stop("File name vector is empty")
     else if (length(file) > 1)
-        lapply(file, function(f) .Call("readNifti", path.expand(f), internal, volumes, PACKAGE="RNifti"))
+        lapply(file, function(f) .Call("readNifti", f, internal, volumes, PACKAGE="RNifti"))
     else
-        .Call("readNifti", path.expand(file), internal, volumes, PACKAGE="RNifti")
+        .Call("readNifti", file, internal, volumes, PACKAGE="RNifti")
 }
 
 #' Write a NIfTI-1 format file
@@ -52,11 +52,10 @@ readNifti <- function (file, internal = FALSE, volumes = NULL)
 #' This function writes an image to NIfTI-1 format, using the standard NIfTI-1
 #' C library.
 #' 
-#' @param image An image, in any acceptable form (see
-#'   \code{\link{retrieveNifti}}).
+#' @param image An image, in any acceptable form (see \code{\link{asNifti}}).
 #' @param file A character string containing a file name.
 #' @param template An optional template object to derive NIfTI-1 properties
-#'   from. Passed to \code{\link{updateNifti}} if \code{image} is an array.
+#'   from. Passed to \code{\link{asNifti}} if \code{image} is an array.
 #' @param datatype The NIfTI datatype to use when writing the data out. The
 #'   default, \code{"auto"} uses the R type or, for internal images, the
 #'   original datatype. Other possibilities are \code{"float"}, \code{"int16"},
@@ -67,51 +66,37 @@ readNifti <- function (file, internal = FALSE, volumes = NULL)
 #' \dontrun{writeNifti(im, "image.nii.gz", datatype="float")}
 #' 
 #' @author Jon Clayden <code@@clayden.org>
-#' @seealso \code{\link{readNifti}}, \code{\link{updateNifti}}
+#' @seealso \code{\link{readNifti}}, \code{\link{asNifti}}
 #' @references The NIfTI-1 standard (\url{http://www.nitrc.org/docman/view.php/26/64/nifti1.h}).
 #' @export
 writeNifti <- function (image, file, template = NULL, datatype = "auto")
 {
     if (is.array(image) && !is.null(template))
-        image <- updateNifti(image, template)
+        image <- asNifti(image, template)
     
-    invisible(.Call("writeNifti", image, path.expand(file), tolower(datatype), PACKAGE="RNifti"))
+    invisible(.Call("writeNifti", image, file, tolower(datatype), PACKAGE="RNifti"))
 }
 
-#' Obtain an internal NIfTI representation of an object
+#' Create or modify an NIfTI image object
 #' 
-#' This function converts filenames, arrays and other image classes into an
-#' object of class \code{"internalImage"}.
+#' This function converts a filename, array or other image class into an object
+#' of class \code{"niftiImage"}, and optionally updates its metadata from a
+#' reference image and/or changes its internal datatype. The dimensions and
+#' pixel dimensions from the \code{image} will replace those from the reference
+#' object, if they are available.
 #' 
-#' If the \code{object} has an internal NIfTI pointer, that will be retrieved
+#' If the \code{image} has an internal NIfTI pointer, that will be retrieved
 #' directly. Otherwise, if it is a string, it will be taken to be a filename.
 #' If it looks like a \code{"nifti"} object (from package \code{oro.nifti}),
 #' or an \code{"MriImage"} object (from package \code{tractor.base}), a
-#' conversion will be attempted. A list will be assumed to be of the form
-#' produced by \code{\link{niftiHeader}}. Finally, a numeric array or matrix
-#' will be converted using default image parameters.
-#'
-#' @param object Any suitable object (see Details).
-#' @return An internal image.
+#' conversion will be performed. A list will be assumed to be of the form
+#' produced by \code{\link{niftiHeader}}. Finally, a numeric array or matrix,
+#' or RGB array, will be converted using default image parameters.
 #' 
-#' @author Jon Clayden <code@@clayden.org>
-#' @seealso \code{\link{readNifti}}, \code{\link{updateNifti}}
-#' @export
-retrieveNifti <- function (object)
-{
-    .Call("asNifti", object, PACKAGE="RNifti")
-}
-
-#' Update an internal NIfTI-1 object using a template
-#' 
-#' This function adds or updates the internal NIfTI-1 object for an array,
-#' using metadata from the template. The dimensions and, if available, pixel
-#' dimensions, from the \code{image} will replace those from the template.
-#' 
-#' If \code{template} is a complete list of NIfTI-1 header fields, like that
+#' If \code{reference} is a complete list of NIfTI-1 header fields, like that
 #' produced by \code{\link{niftiHeader}}, or an image, then it will be used to
 #' create the internal object, and then the data and metadata associated with
-#' the \code{image} will overwrite the appropriate parts. If \code{template}
+#' the \code{image} will overwrite the appropriate parts. If \code{reference}
 #' is an incomplete list, the \code{image} will be used to create the internal
 #' object, and then the specified fields will be overwritten from the list.
 #' This allows users to selectively update certain fields while leaving others
@@ -122,25 +107,34 @@ retrieveNifti <- function (object)
 #' An empty vector will be ignored, also with a warning. If a value of the
 #' wrong length is passed to a vector-valued field, an error will be generated.
 #' 
-#' Datatype information in a list \code{template} is ignored. The datatype can
+#' Datatype information in a list \code{reference} is ignored. The datatype can
 #' only be changed using the \code{datatype} argument, but in this case the
 #' internal object gets out of sync with the R array, so an internal image is
 #' returned to avoid the mismatch. Changing the internal datatype in this way
 #' is for advanced usage only.
 #' 
-#' @param image A numeric array.
-#' @param template An image, in any acceptable form (see
-#'   \code{\link{retrieveNifti}}), or a named list of NIfTI-1 properties like
-#'   that produced by \code{\link{niftiHeader}}. The default of \code{NULL}
-#'   will have no effect.
+#' \code{retrieveNifti} and \code{updateNifti} are soft-deprecated alternative
+#' interfaces to this function, which behave like the pre-existing functions of
+#' the same names. They may be removed in future.
+#' 
+#' @param image Any suitable object (see Details).
+#' @param reference An image, or a named list of NIfTI-1 properties like that
+#'   produced by \code{\link{niftiHeader}}. The default of \code{NULL} will
+#'   have no effect.
 #' @param datatype The NIfTI datatype to use within the internal image. The
 #'   default, \code{"auto"} uses the R type. Other possibilities are
 #'   \code{"float"}, \code{"int16"}, etc., which may be preferred to reduce
 #'   object size. However, no checks are done to ensure that the coercion
 #'   maintains precision, and this option is for advanced usage only.
-#' @return A copy of the original \code{image}, with its internal image
-#'   attribute set or updated appropriately. If \code{datatype} is not
-#'   \code{"auto"} then the result is an internal image.
+#' @param internal Logical value. If \code{FALSE}, the result will be an array
+#'   of class \code{"niftiImage"} containing the image pixel or voxel values,
+#'   with some metadata in attributes. If \code{TRUE}, the result will be an
+#'   object of class \code{"internalImage"}, which exposes some basic metadata
+#'   to R but stores the pixel data internally. If \code{NA}, the default, the
+#'   result will be an internal image only if the input \code{image} is. If a
+#'   new \code{datatype} is set then this value is implicitly \code{TRUE}.
+#' @return An array or internal image, with class \code{"niftiImage"} (and
+#'   possibly also \code{"internalImage"}).
 #' 
 #' @note The \code{scl_slope} and \code{scl_inter} fields affect the numerical
 #'   interpretation of the pixel data, so it is impossible in general to change
@@ -151,12 +145,25 @@ retrieveNifti <- function (object)
 #'   and should be used in preference.
 #' 
 #' @author Jon Clayden <code@@clayden.org>
-#' @seealso \code{\link{$.niftiImage}}, \code{\link{dim.internalImage}},
-#'   \code{\link{pixdim}}, \code{\link{xform}}
+#' @seealso \code{\link{readNifti}}, \code{\link{$.niftiImage}},
+#'   \code{\link{dim.internalImage}}, \code{\link{pixdim}}, \code{\link{xform}}
+#' @aliases retrieveNifti updateNifti
+#' @export
+asNifti <- function (image, reference = NULL, datatype = "auto", internal = NA)
+{
+    .Call("asNifti", image, reference, datatype, internal, PACKAGE="RNifti")
+}
+
+#' @export
+retrieveNifti <- function (object)
+{
+    asNifti(object, internal=TRUE)
+}
+
 #' @export
 updateNifti <- function (image, template = NULL, datatype = "auto")
 {
-    .Call("updateNifti", image, template, datatype, PACKAGE="RNifti")
+    asNifti(image, template, datatype, internal=FALSE)
 }
 
 #' Dump or construct a raw NIfTI or ANALYZE header
@@ -175,10 +182,9 @@ updateNifti <- function (image, template = NULL, datatype = "auto")
 #' \code{dumpNifti} is an alias of \code{niftiHeader}, but the former is now
 #' soft-deprecated.
 #' 
-#' @param image An image, in any acceptable form (see
-#'   \code{\link{retrieveNifti}}). A list containing partial header information
-#'   is acceptable, including an empty list, which returns defaults for every
-#'   field.
+#' @param image An image, in any acceptable form (see \code{\link{asNifti}}).
+#'   A list containing partial header information is acceptable, including an
+#'   empty list, which returns defaults for every field.
 #' @param x A \code{"niftiHeader"} object.
 #' @param ... Ignored.
 #' @return For \code{niftiHeader}, a list of class \code{"niftiHeader"}, with
@@ -219,9 +225,16 @@ print.niftiHeader <- function (x, ...)
     cat("NIfTI-1 header\n")
     widths <- nchar(names(x), "width")
     maxWidth <- max(widths)
+    names <- names(x)
+    strings <- attr(x, "strings")
     
     for (i in seq_along(widths))
-        cat(paste0(paste(rep(" ",maxWidth-widths[i]),collapse=""), names(x)[i], ": ", paste(format(x[[i]],trim=TRUE),collapse="  "), "\n"))
+    {
+        if (!is.null(strings[[names[i]]]))
+            cat(paste0(paste(rep(" ",maxWidth-widths[i]),collapse=""), names[i], ": ", paste(format(x[[i]],trim=TRUE),collapse="  "), " (", strings[[names[i]]], ")\n"))
+        else
+            cat(paste0(paste(rep(" ",maxWidth-widths[i]),collapse=""), names[i], ": ", paste(format(x[[i]],trim=TRUE),collapse="  "), "\n"))
+    }
 }
 
 #' @rdname niftiHeader
@@ -260,7 +273,7 @@ print.analyzeHeader <- function (x, ...)
 #' @export
 niftiVersion <- function (file)
 {
-    sapply(file, function(f) .Call("niftiVersion", path.expand(f), PACKAGE="RNifti"))
+    sapply(file, function(f) .Call("niftiVersion", f, PACKAGE="RNifti"))
 }
 
 addresses <- function (image)

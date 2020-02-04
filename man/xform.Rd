@@ -22,8 +22,8 @@ orientation(x) <- value
 rotation(x, useQuaternionFirst = TRUE)
 }
 \arguments{
-\item{image, x}{An image, in any acceptable form (see
-\code{\link{retrieveNifti}}), or a 4x4 numeric xform matrix.}
+\item{image, x}{An image, in any acceptable form (see \code{\link{asNifti}}),
+or a 4x4 numeric xform matrix.}
 
 \item{useQuaternionFirst}{A single logical value. If \code{TRUE}, the
 ``qform'' matrix will be used first, if it is defined; otherwise the
@@ -35,7 +35,8 @@ is also set.}
 }
 \value{
 For \code{xform}, an affine matrix corresponding to the ``qform''
-  or ``sform'' information in the image header. For \code{orientation}, a
+  or ``sform'' information in the image header, with a \code{"code"}
+  attribute giving the corresponding xform code. For \code{orientation}, a
   string with three characters indicating the (approximate) orientation of
   the image. The replacement forms return the modified object.
 }
