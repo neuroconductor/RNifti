@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Obtain an internal NIfTI representation of an object — retrieveNifti • RNifti</title>
+<title>Create or modify an NIfTI image object — asNifti • RNifti</title>
 
 
 <!-- jquery -->
@@ -35,9 +35,12 @@
 
 
 
-<meta property="og:title" content="Obtain an internal NIfTI representation of an object — retrieveNifti" />
-<meta property="og:description" content="This function converts filenames, arrays and other image classes into an
-object of class &quot;internalImage&quot;." />
+<meta property="og:title" content="Create or modify an NIfTI image object — asNifti" />
+<meta property="og:description" content="This function converts a filename, array or other image class into an object
+of class &quot;niftiImage&quot;, and optionally updates its metadata from a
+reference image and/or changes its internal datatype. The dimensions and
+pixel dimensions from the image will replace those from the reference
+object, if they are available." />
 <meta name="twitter:card" content="summary" />
 
 
@@ -70,7 +73,7 @@ object of class &quot;internalImage&quot;." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">RNifti</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.11.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.1.0</span>
       </span>
     </div>
 
@@ -106,50 +109,109 @@ object of class &quot;internalImage&quot;." />
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Obtain an internal NIfTI representation of an object</h1>
+    <h1>Create or modify an NIfTI image object</h1>
     <small class="dont-index">Source: <a href='https://github.com/jonclayden/RNifti/blob/master/R/nifti.R'><code>R/nifti.R</code></a></small>
-    <div class="hidden name"><code>retrieveNifti.Rd</code></div>
+    <div class="hidden name"><code>asNifti.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>This function converts filenames, arrays and other image classes into an
-object of class <code>"internalImage"</code>.</p>
+    <p>This function converts a filename, array or other image class into an object
+of class <code>"niftiImage"</code>, and optionally updates its metadata from a
+reference image and/or changes its internal datatype. The dimensions and
+pixel dimensions from the <code>image</code> will replace those from the reference
+object, if they are available.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>retrieveNifti</span>(<span class='no'>object</span>)</pre>
+    <pre class="usage"><span class='fu'>asNifti</span>(<span class='no'>image</span>, <span class='kw'>reference</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>datatype</span> <span class='kw'>=</span> <span class='st'>"auto"</span>, <span class='kw'>internal</span> <span class='kw'>=</span> <span class='fl'>NA</span>)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>object</th>
+      <th>image</th>
       <td><p>Any suitable object (see Details).</p></td>
+    </tr>
+    <tr>
+      <th>reference</th>
+      <td><p>An image, or a named list of NIfTI-1 properties like that
+produced by <code>niftiHeader</code>. The default of <code>NULL</code> will
+have no effect.</p></td>
+    </tr>
+    <tr>
+      <th>datatype</th>
+      <td><p>The NIfTI datatype to use within the internal image. The
+default, <code>"auto"</code> uses the R type. Other possibilities are
+<code>"float"</code>, <code>"int16"</code>, etc., which may be preferred to reduce
+object size. However, no checks are done to ensure that the coercion
+maintains precision, and this option is for advanced usage only.</p></td>
+    </tr>
+    <tr>
+      <th>internal</th>
+      <td><p>Logical value. If <code>FALSE</code>, the result will be an array
+of class <code>"niftiImage"</code> containing the image pixel or voxel values,
+with some metadata in attributes. If <code>TRUE</code>, the result will be an
+object of class <code>"internalImage"</code>, which exposes some basic metadata
+to R but stores the pixel data internally. If <code>NA</code>, the default, the
+result will be an internal image only if the input <code>image</code> is. If a
+new <code>datatype</code> is set then this value is implicitly <code>TRUE</code>.</p></td>
     </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>An internal image.</p>
+    <p>An array or internal image, with class <code>"niftiImage"</code> (and
+  possibly also <code>"internalImage"</code>).</p>
     <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
 
-    <p>If the <code>object</code> has an internal NIfTI pointer, that will be retrieved
+    <p>If the <code>image</code> has an internal NIfTI pointer, that will be retrieved
 directly. Otherwise, if it is a string, it will be taken to be a filename.
 If it looks like a <code>"nifti"</code> object (from package <code>oro.nifti</code>),
 or an <code>"MriImage"</code> object (from package <code>tractor.base</code>), a
-conversion will be attempted. A list will be assumed to be of the form
-produced by <code>niftiHeader</code>. Finally, a numeric array or matrix
-will be converted using default image parameters.</p>
+conversion will be performed. A list will be assumed to be of the form
+produced by <code>niftiHeader</code>. Finally, a numeric array or matrix,
+or RGB array, will be converted using default image parameters.</p>
+<p>If <code>reference</code> is a complete list of NIfTI-1 header fields, like that
+produced by <code>niftiHeader</code>, or an image, then it will be used to
+create the internal object, and then the data and metadata associated with
+the <code>image</code> will overwrite the appropriate parts. If <code>reference</code>
+is an incomplete list, the <code>image</code> will be used to create the internal
+object, and then the specified fields will be overwritten from the list.
+This allows users to selectively update certain fields while leaving others
+alone (but see the note below).</p>
+<p>If multiple values are passed for a field that expects a scalar (which is
+most of them), the first element of the vector will be used, with a warning.
+An empty vector will be ignored, also with a warning. If a value of the
+wrong length is passed to a vector-valued field, an error will be generated.</p>
+<p>Datatype information in a list <code>reference</code> is ignored. The datatype can
+only be changed using the <code>datatype</code> argument, but in this case the
+internal object gets out of sync with the R array, so an internal image is
+returned to avoid the mismatch. Changing the internal datatype in this way
+is for advanced usage only.</p>
+<p><code>retrieveNifti</code> and <code>updateNifti</code> are soft-deprecated alternative
+interfaces to this function, which behave like the pre-existing functions of
+the same names. They may be removed in future.</p>
+    <h2 class="hasAnchor" id="note"><a class="anchor" href="#note"></a>Note</h2>
+
+    <p>The <code>scl_slope</code> and <code>scl_inter</code> fields affect the numerical
+  interpretation of the pixel data, so it is impossible in general to change
+  them without also changing the array values on both the C and the R side.
+  Therefore, to avoid unexpected side-effects, these fields are not affected
+  by this function. The <code>dim</code> and <code>pixdim</code> fields can be changed,
+  but for most users the accessor functions of the same name are much safer,
+  and should be used in preference.</p>
     <h2 class="hasAnchor" id="see-also"><a class="anchor" href="#see-also"></a>See also</h2>
 
-    <div class='dont-index'><p><code>readNifti</code>, <code>updateNifti</code></p></div>
+    <div class='dont-index'><p><code>readNifti</code>, <code>$.niftiImage</code>,
+  <code>dim.internalImage</code>, <code>pixdim</code>, <code>xform</code></p></div>
 
   </div>
-  <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
+  <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <h2>Contents</h2>
     <ul class="nav nav-pills nav-stacked">
       <li><a href="#arguments">Arguments</a></li>
       <li><a href="#value">Value</a></li>
       <li><a href="#details">Details</a></li>
+      <li><a href="#note">Note</a></li>
       <li><a href="#see-also">See also</a></li>
     </ul>
 

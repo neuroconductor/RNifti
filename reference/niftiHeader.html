@@ -72,7 +72,7 @@ metadata." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">RNifti</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.11.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.1.0</span>
       </span>
     </div>
 
@@ -135,10 +135,9 @@ metadata.</p>
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>image</th>
-      <td><p>An image, in any acceptable form (see
-<code>retrieveNifti</code>). A list containing partial header information
-is acceptable, including an empty list, which returns defaults for every
-field.</p></td>
+      <td><p>An image, in any acceptable form (see <code>asNifti</code>).
+A list containing partial header information is acceptable, including an
+empty list, which returns defaults for every field.</p></td>
     </tr>
     <tr>
       <th>x</th>
@@ -184,8 +183,8 @@ soft-deprecated.</p>
 #&gt;      intent_p1: 0
 #&gt;      intent_p2: 0
 #&gt;      intent_p3: 0
-#&gt;    intent_code: 0
-#&gt;       datatype: 4
+#&gt;    intent_code: 0 (Unknown)
+#&gt;       datatype: 4 (INT16)
 #&gt;         bitpix: 16
 #&gt;    slice_start: 0
 #&gt;         pixdim: -1.0  2.5  2.5  2.5  0.0  0.0  0.0  0.0
@@ -193,7 +192,7 @@ soft-deprecated.</p>
 #&gt;      scl_slope: 1
 #&gt;      scl_inter: 0
 #&gt;      slice_end: 0
-#&gt;     slice_code: 0
+#&gt;     slice_code: 0 (Unknown)
 #&gt;     xyzt_units: 10
 #&gt;        cal_max: 2503
 #&gt;        cal_min: 0
@@ -201,8 +200,8 @@ soft-deprecated.</p>
 #&gt;        toffset: 0
 #&gt;        descrip: TractoR NIfTI writer v3.0.0
 #&gt;       aux_file: 
-#&gt;     qform_code: 2
-#&gt;     sform_code: 2
+#&gt;     qform_code: 2 (Aligned Anat)
+#&gt;     sform_code: 2 (Aligned Anat)
 #&gt;      quatern_b: 0
 #&gt;      quatern_c: 1
 #&gt;      quatern_d: 0
@@ -222,8 +221,8 @@ soft-deprecated.</p>
 #&gt;      intent_p1: 0
 #&gt;      intent_p2: 0
 #&gt;      intent_p3: 0
-#&gt;    intent_code: 0
-#&gt;       datatype: 8
+#&gt;    intent_code: 0 (Unknown)
+#&gt;       datatype: 8 (INT32)
 #&gt;         bitpix: 32
 #&gt;    slice_start: 0
 #&gt;         pixdim: 0  1  1  0  0  0  0  0
@@ -231,7 +230,7 @@ soft-deprecated.</p>
 #&gt;      scl_slope: 0
 #&gt;      scl_inter: 0
 #&gt;      slice_end: 0
-#&gt;     slice_code: 0
+#&gt;     slice_code: 0 (Unknown)
 #&gt;     xyzt_units: 0
 #&gt;        cal_max: 0
 #&gt;        cal_min: 0
@@ -239,8 +238,8 @@ soft-deprecated.</p>
 #&gt;        toffset: 0
 #&gt;        descrip: 
 #&gt;       aux_file: 
-#&gt;     qform_code: 0
-#&gt;     sform_code: 0
+#&gt;     qform_code: 0 (Unknown)
+#&gt;     sform_code: 0 (Unknown)
 #&gt;      quatern_b: 0
 #&gt;      quatern_c: 0
 #&gt;      quatern_d: 0
@@ -254,7 +253,7 @@ soft-deprecated.</p>
 #&gt;          magic: n+1</div><div class='input'>
 </div></pre>
   </div>
-  <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
+  <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <h2>Contents</h2>
     <ul class="nav nav-pills nav-stacked">
       <li><a href="#arguments">Arguments</a></li>

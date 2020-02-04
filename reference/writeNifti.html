@@ -70,7 +70,7 @@ C library." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">RNifti</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.11.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.1.0</span>
       </span>
     </div>
 
@@ -123,8 +123,7 @@ C library.</p>
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>image</th>
-      <td><p>An image, in any acceptable form (see
-<code>retrieveNifti</code>).</p></td>
+      <td><p>An image, in any acceptable form (see <code>asNifti</code>).</p></td>
     </tr>
     <tr>
       <th>file</th>
@@ -133,7 +132,7 @@ C library.</p>
     <tr>
       <th>template</th>
       <td><p>An optional template object to derive NIfTI-1 properties
-from. Passed to <code>updateNifti</code> if <code>image</code> is an array.</p></td>
+from. Passed to <code>asNifti</code> if <code>image</code> is an array.</p></td>
     </tr>
     <tr>
       <th>datatype</th>
@@ -150,12 +149,12 @@ done to ensure that the coercion maintains precision.</p></td>
     <p>The NIfTI-1 standard (<a href='http://www.nitrc.org/docman/view.php/26/64/nifti1.h'>http://www.nitrc.org/docman/view.php/26/64/nifti1.h</a>).</p>
     <h2 class="hasAnchor" id="see-also"><a class="anchor" href="#see-also"></a>See also</h2>
 
-    <div class='dont-index'><p><code>readNifti</code>, <code>updateNifti</code></p></div>
+    <div class='dont-index'><p><code>readNifti</code>, <code>asNifti</code></p></div>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><div class='input'><span class='kw'>if</span> (<span class='fl'>FALSE</span>) <span class='fu'>writeNifti</span>(<span class='no'>im</span>, <span class='st'>"image.nii.gz"</span>, <span class='kw'>datatype</span><span class='kw'>=</span><span class='st'>"float"</span>)</div></pre>
   </div>
-  <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
+  <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <h2>Contents</h2>
     <ul class="nav nav-pills nav-stacked">
       <li><a href="#arguments">Arguments</a></li>

@@ -73,7 +73,7 @@ order of the image and real space." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">RNifti</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.11.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.1.0</span>
       </span>
     </div>
 
@@ -139,8 +139,8 @@ order of the image and real space.</p>
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>image, x</th>
-      <td><p>An image, in any acceptable form (see
-<code>retrieveNifti</code>), or a 4x4 numeric xform matrix.</p></td>
+      <td><p>An image, in any acceptable form (see <code>asNifti</code>),
+or a 4x4 numeric xform matrix.</p></td>
     </tr>
     <tr>
       <th>useQuaternionFirst</th>
@@ -159,7 +159,8 @@ is also set.</p></td>
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
     <p>For <code>xform</code>, an affine matrix corresponding to the ``qform''
-  or ``sform'' information in the image header. For <code>orientation</code>, a
+  or ``sform'' information in the image header, with a <code>"code"</code>
+  attribute giving the corresponding xform code. For <code>orientation</code>, a
   string with three characters indicating the (approximate) orientation of
   the image. The replacement forms return the modified object.</p>
     <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
@@ -197,7 +198,9 @@ alone.</p>
 #&gt; [1,] -2.5  0.0  0.0 122.03390
 #&gt; [2,]  0.0  2.5  0.0 -95.18523
 #&gt; [3,]  0.0  0.0  2.5 -55.03814
-#&gt; [4,]  0.0  0.0  0.0   1.00000</div><div class='input'>
+#&gt; [4,]  0.0  0.0  0.0   1.00000
+#&gt; attr(,"code")
+#&gt; [1] 2</div><div class='input'>
 <span class='co'># Remove the qform information</span>
 <span class='fu'>qform</span>(<span class='no'>im</span>) <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/structure.html'>structure</a></span>(<span class='fu'><a href='https://rdrr.io/r/base/diag.html'>diag</a></span>(<span class='fl'>4</span>), <span class='kw'>code</span><span class='kw'>=</span><span class='fl'>0L</span>)
 
@@ -206,12 +209,14 @@ alone.</p>
 #&gt; [1,] -2.5  0.0  0.0 122.03390
 #&gt; [2,]  0.0  2.5  0.0 -95.18523
 #&gt; [3,]  0.0  0.0  2.5 -55.03814
-#&gt; [4,]  0.0  0.0  0.0   1.00000</div><div class='input'>
+#&gt; [4,]  0.0  0.0  0.0   1.00000
+#&gt; attr(,"code")
+#&gt; [1] 2</div><div class='input'>
 <span class='co'># The identity matrix corresponds to RAS orientation</span>
 <span class='fu'>orientation</span>(<span class='fu'><a href='https://rdrr.io/r/base/diag.html'>diag</a></span>(<span class='fl'>4</span>))</div><div class='output co'>#&gt; [1] "RAS"</div><div class='input'>
 </div></pre>
   </div>
-  <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
+  <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <h2>Contents</h2>
     <ul class="nav nav-pills nav-stacked">
       <li><a href="#arguments">Arguments</a></li>

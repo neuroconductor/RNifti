@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Number of dimensions — ndim • RNifti</title>
+<title>Extract channels from RGB data — channels • RNifti</title>
 
 
 <!-- jquery -->
@@ -35,8 +35,10 @@
 
 
 
-<meta property="og:title" content="Number of dimensions — ndim" />
-<meta property="og:description" content="This function is shorthand for length(dim(object))." />
+<meta property="og:title" content="Extract channels from RGB data — channels" />
+<meta property="og:description" content="Extract one or more channels from an RGB data array that was obtained from
+an RGB NIfTI image or created by the rgbArray function. The
+result is more amenable to numeric manipulation." />
 <meta name="twitter:card" content="summary" />
 
 
@@ -105,41 +107,50 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Number of dimensions</h1>
-    <small class="dont-index">Source: <a href='https://github.com/jonclayden/RNifti/blob/master/R/image.R'><code>R/image.R</code></a></small>
-    <div class="hidden name"><code>ndim.Rd</code></div>
+    <h1>Extract channels from RGB data</h1>
+    <small class="dont-index">Source: <a href='https://github.com/jonclayden/RNifti/blob/master/R/rgb.R'><code>R/rgb.R</code></a></small>
+    <div class="hidden name"><code>channels.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>This function is shorthand for <code><a href='https://rdrr.io/r/base/length.html'>length(dim(object))</a></code>.</p>
+    <p>Extract one or more channels from an RGB data array that was obtained from
+an RGB NIfTI image or created by the <code>rgbArray</code> function. The
+result is more amenable to numeric manipulation.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>ndim</span>(<span class='no'>object</span>)</pre>
+    <pre class="usage"><span class='fu'>channels</span>(<span class='no'>array</span>, <span class='kw'>channels</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"red"</span>, <span class='st'>"green"</span>, <span class='st'>"blue"</span>, <span class='st'>"alpha"</span>),
+  <span class='kw'>raw</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>object</th>
-      <td><p>An R object.</p></td>
+      <th>array</th>
+      <td><p>An image, an <code>rgbArray</code>, or another array that can be
+converted to the latter.</p></td>
+    </tr>
+    <tr>
+      <th>channels</th>
+      <td><p>A character vector of channels to extract.</p></td>
+    </tr>
+    <tr>
+      <th>raw</th>
+      <td><p>Boolean value: if <code>TRUE</code>, return a raw array, which is the
+most compact representation; otherwise return an integer array.</p></td>
     </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>The dimensionality of the object. Objects without a <code>dim</code>
-  attribute will produce zero.</p>
+    <p>A raw-mode or integer-mode array with one more dimension than the
+  first argument, corresponding to channels.</p>
 
-    <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='fu'>ndim</span>(<span class='fu'><a href='https://rdrr.io/r/base/array.html'>array</a></span>(<span class='fl'>0L</span>, <span class='kw'>dim</span><span class='kw'>=</span><span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>10</span>,<span class='fl'>10</span>)))</div><div class='output co'>#&gt; [1] 2</div><div class='input'>
-</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <h2>Contents</h2>
     <ul class="nav nav-pills nav-stacked">
       <li><a href="#arguments">Arguments</a></li>
       <li><a href="#value">Value</a></li>
-      <li><a href="#examples">Examples</a></li>
     </ul>
 
     <h2>Author</h2>

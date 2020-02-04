@@ -39,7 +39,7 @@
 <meta property="og:description" content="These methods provide shorthand access to metadata elements from the NIfTI
 header corresponding to an image. The extraction version returns the
 corresponding element from the result of niftiHeader, while the
-replacement version calls updateNifti to replace it." />
+replacement version calls asNifti to replace it." />
 <meta name="twitter:card" content="summary" />
 
 
@@ -72,7 +72,7 @@ replacement version calls updateNifti to replace it." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">RNifti</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.11.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.1.0</span>
       </span>
     </div>
 
@@ -117,7 +117,7 @@ replacement version calls updateNifti to replace it." />
     <p>These methods provide shorthand access to metadata elements from the NIfTI
 header corresponding to an image. The extraction version returns the
 corresponding element from the result of <code>niftiHeader</code>, while the
-replacement version calls <code>updateNifti</code> to replace it.</p>
+replacement version calls <code>asNifti</code> to replace it.</p>
     </div>
 
     <pre class="usage"># S3 method for niftiImage
@@ -145,14 +145,14 @@ $(x, name) <- value</pre>
 
     <h2 class="hasAnchor" id="see-also"><a class="anchor" href="#see-also"></a>See also</h2>
 
-    <div class='dont-index'><p><code>niftiHeader</code>, <code>updateNifti</code></p></div>
+    <div class='dont-index'><p><code>niftiHeader</code>, <code>asNifti</code></p></div>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><div class='input'><span class='no'>im</span> <span class='kw'>&lt;-</span> <span class='fu'>readNifti</span>(<span class='fu'><a href='https://rdrr.io/r/base/system.file.html'>system.file</a></span>(<span class='st'>"extdata"</span>, <span class='st'>"example.nii.gz"</span>, <span class='kw'>package</span><span class='kw'>=</span><span class='st'>"RNifti"</span>))
 <span class='fu'><a href='https://rdrr.io/r/base/print.html'>print</a></span>(<span class='no'>im</span>$<span class='no'>descrip</span>)</div><div class='output co'>#&gt; [1] "TractoR NIfTI writer v3.0.0"</div><div class='input'>
 </div></pre>
   </div>
-  <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
+  <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <h2>Contents</h2>
     <ul class="nav nav-pills nav-stacked">
       <li><a href="#arguments">Arguments</a></li>

@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Update an internal NIfTI-1 object using a template — updateNifti • RNifti</title>
+<title>RGB arrays — rgbArray • RNifti</title>
 
 
 <!-- jquery -->
@@ -35,10 +35,12 @@
 
 
 
-<meta property="og:title" content="Update an internal NIfTI-1 object using a template — updateNifti" />
-<meta property="og:description" content="This function adds or updates the internal NIfTI-1 object for an array,
-using metadata from the template. The dimensions and, if available, pixel
-dimensions, from the image will replace those from the template." />
+<meta property="og:title" content="RGB arrays — rgbArray" />
+<meta property="og:description" content="The rgbArray function constructs an integer array whose values are
+byte-packed representations of 8-bit RGBA colour values. The channels
+attribute (with value 3 or 4) indicates how many channels are being used.
+The resulting array can be used to construct an RGB(A) NIfTI image, or
+converted to standard R colour strings using the as.character method." />
 <meta name="twitter:card" content="summary" />
 
 
@@ -71,7 +73,7 @@ dimensions, from the image will replace those from the template." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">RNifti</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.11.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.1.0</span>
       </span>
     </div>
 
@@ -107,90 +109,91 @@ dimensions, from the image will replace those from the template." />
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Update an internal NIfTI-1 object using a template</h1>
-    <small class="dont-index">Source: <a href='https://github.com/jonclayden/RNifti/blob/master/R/nifti.R'><code>R/nifti.R</code></a></small>
-    <div class="hidden name"><code>updateNifti.Rd</code></div>
+    <h1>RGB arrays</h1>
+    <small class="dont-index">Source: <a href='https://github.com/jonclayden/RNifti/blob/master/R/rgb.R'><code>R/rgb.R</code></a></small>
+    <div class="hidden name"><code>rgbArray.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>This function adds or updates the internal NIfTI-1 object for an array,
-using metadata from the template. The dimensions and, if available, pixel
-dimensions, from the <code>image</code> will replace those from the template.</p>
+    <p>The <code>rgbArray</code> function constructs an integer array whose values are
+byte-packed representations of 8-bit RGBA colour values. The <code>channels</code>
+attribute (with value 3 or 4) indicates how many channels are being used.
+The resulting array can be used to construct an RGB(A) NIfTI image, or
+converted to standard R colour strings using the <code>as.character</code> method.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>updateNifti</span>(<span class='no'>image</span>, <span class='kw'>template</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>datatype</span> <span class='kw'>=</span> <span class='st'>"auto"</span>)</pre>
+    <pre class="usage"><span class='fu'>rgbArray</span>(<span class='no'>red</span>, <span class='no'>green</span>, <span class='no'>blue</span>, <span class='no'>alpha</span>, <span class='kw'>max</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>dim</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='no'>...</span>)
+
+<span class='co'># S3 method for rgbArray</span>
+<span class='fu'><a href='https://rdrr.io/r/base/character.html'>as.character</a></span>(<span class='no'>x</span>, <span class='kw'>flatten</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='no'>...</span>)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>image</th>
-      <td><p>A numeric array.</p></td>
+      <th>red</th>
+      <td><p>A numeric vector (or array) of red channel values. If this is the
+only channel argument, it can also be a character vector of colour values
+(including alpha, if required), or a numeric array whose last dimension is
+2 (for grey + alpha), 3 (for RGB) or 4 (for RGBA).</p></td>
     </tr>
     <tr>
-      <th>template</th>
-      <td><p>An image, in any acceptable form (see
-<code>retrieveNifti</code>), or a named list of NIfTI-1 properties like
-that produced by <code>niftiHeader</code>. The default of <code>NULL</code>
-will have no effect.</p></td>
+      <th>green, blue, alpha</th>
+      <td><p>Numeric vectors (or arrays) containing values for
+the appropriate channel. These will be combined with the <code>red</code> values
+using <code>cbind</code>, and hence recycled as necessary. Alpha, or green and
+blue, can be missing.</p></td>
     </tr>
     <tr>
-      <th>datatype</th>
-      <td><p>The NIfTI datatype to use within the internal image. The
-default, <code>"auto"</code> uses the R type. Other possibilities are
-<code>"float"</code>, <code>"int16"</code>, etc., which may be preferred to reduce
-object size. However, no checks are done to ensure that the coercion
-maintains precision, and this option is for advanced usage only.</p></td>
+      <th>max</th>
+      <td><p>The maximum possible value for any channel. The default
+is 255 when the data is of integer mode, and 1 otherwise. Values above
+this, or below zero, will be clipped to the appropriate extreme.</p></td>
+    </tr>
+    <tr>
+      <th>dim</th>
+      <td><p>An integer vector of dimensions for the final array. The
+dimensions of <code>red</code> are used if this is <code>NULL</code>.</p></td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td><p>For <code>rgbArray</code>, additional attributes to set on the result,
+such as <code>pixdim</code>. These are passed directly to
+<code><a href='https://rdrr.io/r/base/structure.html'>structure</a></code>. For the <code>as.character</code> method, this argument
+is ignored.</p></td>
+    </tr>
+    <tr>
+      <th>x</th>
+      <td><p>An <code>rgbArray</code> object.</p></td>
+    </tr>
+    <tr>
+      <th>flatten</th>
+      <td><p>Logical value. If <code>FALSE</code>, the dimensions of <code>x</code>
+will be retained in the result. The default is <code>TRUE</code>, for
+consistency with the usual behaviour of <code>as.character</code>, which strips
+all attributes.</p></td>
     </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>A copy of the original <code>image</code>, with its internal image
-  attribute set or updated appropriately. If <code>datatype</code> is not
-  <code>"auto"</code> then the result is an internal image.</p>
-    <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
-
-    <p>If <code>template</code> is a complete list of NIfTI-1 header fields, like that
-produced by <code>niftiHeader</code>, or an image, then it will be used to
-create the internal object, and then the data and metadata associated with
-the <code>image</code> will overwrite the appropriate parts. If <code>template</code>
-is an incomplete list, the <code>image</code> will be used to create the internal
-object, and then the specified fields will be overwritten from the list.
-This allows users to selectively update certain fields while leaving others
-alone (but see the note below).</p>
-<p>If multiple values are passed for a field that expects a scalar (which is
-most of them), the first element of the vector will be used, with a warning.
-An empty vector will be ignored, also with a warning. If a value of the
-wrong length is passed to a vector-valued field, an error will be generated.</p>
-<p>Datatype information in a list <code>template</code> is ignored. The datatype can
-only be changed using the <code>datatype</code> argument, but in this case the
-internal object gets out of sync with the R array, so an internal image is
-returned to avoid the mismatch. Changing the internal datatype in this way
-is for advanced usage only.</p>
+    <p><code>rgbArray</code> returns an integer-mode array of class
+  <code>"rgbArray"</code>. The <code>as.character</code> method returns a character-mode
+  vector of colour strings.</p>
     <h2 class="hasAnchor" id="note"><a class="anchor" href="#note"></a>Note</h2>
 
-    <p>The <code>scl_slope</code> and <code>scl_inter</code> fields affect the numerical
-  interpretation of the pixel data, so it is impossible in general to change
-  them without also changing the array values on both the C and the R side.
-  Therefore, to avoid unexpected side-effects, these fields are not affected
-  by this function. The <code>dim</code> and <code>pixdim</code> fields can be changed,
-  but for most users the accessor functions of the same name are much safer,
-  and should be used in preference.</p>
-    <h2 class="hasAnchor" id="see-also"><a class="anchor" href="#see-also"></a>See also</h2>
-
-    <div class='dont-index'><p><code>$.niftiImage</code>, <code>dim.internalImage</code>,
-  <code>pixdim</code>, <code>xform</code></p></div>
+    <p>The values of an <code>"rgbArray"</code> are not easily interpreted, and
+  may depend on the endianness of the platform. For manipulation or use as
+  colours they should generally be converted to character mode, or the
+  channels extracted using the <code>channels</code> function.</p>
 
   </div>
-  <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
+  <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <h2>Contents</h2>
     <ul class="nav nav-pills nav-stacked">
       <li><a href="#arguments">Arguments</a></li>
       <li><a href="#value">Value</a></li>
-      <li><a href="#details">Details</a></li>
       <li><a href="#note">Note</a></li>
-      <li><a href="#see-also">See also</a></li>
     </ul>
 
     <h2>Author</h2>
