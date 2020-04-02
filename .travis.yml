@@ -1,6 +1,6 @@
 language: r
-warnings_are_errors: no
-cache: no
+warnings_are_errors: yes
+cache: packages
 bioc_required: yes
 cran: http://cran.rstudio.com
 dist: xenial
@@ -14,85 +14,96 @@ addons:
       - mesa-common-dev
       - libglu1-mesa-dev
       - devscripts
-os: linux
+os:
+  - linux
+  - osx
+osx_image: xcode9.4
 services: xvfb
-r: release
+r:
+  - 3.3
+  - 3.4
+  - 3.5
+  - release
+  - devel
+jobs:
+  allow_failures:
+    - r: devel
 env:
   global:
-    - R_BUILD_ARGS="--no-manual"
-    - R_CHECK_ARGS="--as-cran --install-args=--build"
     - RGL_USE_NULL=TRUE
-    - WARNINGS_ARE_ERRORS=1
     - PROJECT_NAME=neuroconductor
     - DISPLAY=:99.0
     - R_REMOTES_NO_ERRORS_FROM_WARNINGS=true
     - _R_CHECK_FORCE_SUGGESTS_=false
+    - CACHE_NAME="${TRAVIS_OS_NAME}-R-${TRAVIS_R_VERSION}"
+r_check_args: --as-cran --install-args=--build
 before_install:
   - if [ "$TRAVIS_DIST" = "trusty" ]; then sudo apt-get -y install libgsl0ldbl ; fi
   - ulimit -n 2048
-  - export LD_LIBRARY_PATH=/usr/local/clang/lib:${LD_LIBRARY_PATH}
   - export PROJ_DIR=`basename $PWD`
-  - echo "travis_wait*\.log$" >> .Rbuildignore
   - fname=travis_helpers.sh
   - wget -O ${fname} http://bit.ly/travis_helpers
   - cat ${fname}; source ${fname}; rm ${fname}
   - cat DESCRIPTION
+  - codename=`linux_codename`;
   - start_xvfb ;
+  - export rver=`r_version`; echo $rver ;
+  - x=`export_clang_cxx`; eval ${x}
+  - if [ "$TRAVIS_OS_NAME" = "osx" ]; then no_open_mp ; brew install -v freetype ;
+    fi
   - jags_install || true;
   - if `need_v8`; then v8_install || true; fi
   - dcmtk_install || true;
   - gsl_install 2.1 || true ;
-  - export rver=`r_version`; echo $rver ;
-  - export PACKAGE_NAME=`package_name`
-  - export RCHECK_DIR=${PACKAGE_NAME}.Rcheck
-  - remove_neuroc_packages
-  - export ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=1
-  - x=`export_clang_cxx`; eval ${x}
   - echo "CC=${CC}, CXX=${CXX}, CXX1X=${CXX1X}"
+  - echo "CXX1XSTD=${CXX1XSTD}, CXX11=${CXX11}"
   - echo "CXX1XSTD=${CXX1XSTD}, CXX11=${CXX11}"
   - clang_cxx
   - export cmake_version="3.11"
   - cmake --version
   - x=`cmake_setup`; echo "${x}"; eval ${x};
   - cmake --version
-  - export ants_user=neuroconductor
-  - if [[ "${PACKAGE_NAME}" == "ITKR" || "${PACKAGE_NAME}" == "ANTsRCore" || "${PACKAGE_NAME}"
-    == "ANTsR" ]]; then Rscript -e "install.packages(c('Rcpp', 'RcppEigen'), type
-    = 'source', repo = 'http://cran.rstudio.com')" ; fi
-  - if [[ "${PACKAGE_NAME}" == "ITKR" || "${PACKAGE_NAME}" == "ANTsRCore" ]]; then
-    export R_BUILD_ARGS="${R_BUILD_ARGS} --no-build-vignettes " ; export R_CHECK_ARGS="--no-vignettes
-    ${R_CHECK_ARGS}" ; fi
-  - if [[ "${PACKAGE_NAME}" != "ITKR" ]]; then echo "Installing Missing Deps ITKR"
-    ; install_missing_remote_deps_all ${ants_user}/ITKR ; gh_binary_install ${ants_user}/ITKR
-    ; fi
-  - if [[ "${PACKAGE_NAME}" != "ANTsRCore" && "${PACKAGE_NAME}" != "ITKR" ]]; then
-    echo "Installing Missing Deps ANTsRCore" ; install_missing_remote_deps_all ${ants_user}/ANTsRCore;
-    gh_binary_install_passive ${ants_user}/ANTsRCore ; fi
-  - if [[ "${PACKAGE_NAME}" != "ANTsRCore" && "${PACKAGE_NAME}" != "ITKR" && "${PACKAGE_NAME}"
-    != "ANTsR" ]]; then echo "Installing Missing Deps ANTsR" ; install_missing_remote_deps_all
-    ${ants_user}/ANTsR ; gh_binary_install_passive ${ants_user}/ANTsR ; fi
-  - if [[ "${PACKAGE_NAME}" == "ANTsR" ]]; then export _R_CHECK_FORCE_SUGGESTS_=false
-    ; fi
+  - remove_neuroc_packages
   - cat DESCRIPTION
   - install_remotes_no_dep
   - cat DESCRIPTION
-  - echo $PATH ;
-  - install_deps_no_suggests
+  - export PACKAGE_NAME=`package_name`
+  - echo "Package Name is $PACKAGE_NAME"
+  - if [[ "${PACKAGE_NAME}" == "waveslim" ]]; then fftw_install ; fi
+  - if [[ "${PACKAGE_NAME}" == "dti" || "${PACKAGE_NAME}" == "qMRI" ]]; then gsl_install
+    ; fi
+  - if [[ "${PACKAGE_NAME}" == "ROpenCVLite" || "${PACKAGE_NAME}" == "Rvision" ||
+    "${PACKAGE_NAME}" == "rtapas" ]]; then shopt -s expand_aliases ; x=`Rscript -e
+    "cat(Sys.which('R'))"` ; echo "reset R" ; alias R="travis_wait 100 ${x}" ; fi
+  - setup_python 3.6 false ;
   - install_python_requirements ;
   - R CMD javareconf ;
-  - travis_run_cache
-script:
-  - Rscript -e 'install.packages("remotes")'
-  - Rscript -e 'remotes::install_github("hadley/pkgdown")'
-  - travis_wait 100 Rscript -e 'pkgdown::clean_site()'
-  - travis_wait 100 Rscript -e 'pkgdown::build_site()'
+after_success: dump_logs
+after_failure: dump_logs
+before_deploy:
+  - if [ "$TRAVIS_OS_NAME" = "osx" ]; then PKG_TARBALL=$(ls -1t *.tgz | head -n 1);
+    PKG_TARBALL_WITH_R=`echo $PKG_TARBALL | sed 's/.tgz/_'"R${rver}"'.tgz/'` ; mv
+    ${PKG_TARBALL} ${PKG_TARBALL_WITH_R} ; echo "Built tarball is ${PKG_TARBALL_WITH_R}"
+    ; fi
+  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then PKG_TARBALL=$(ls -1t *.tar.gz | head
+    -n 1); PKG_TARBALL_WITH_R=`echo $PKG_TARBALL | sed 's/.tar.gz/_'"R${rver}"'.tar.gz/'`
+    ; mv ${PKG_TARBALL} ${PKG_TARBALL_WITH_R} ; echo "Built tarball is ${PKG_TARBALL_WITH_R}"
+    ; fi
+  - if [[ "${TRAVIS_OS_NAME}" = "osx" ]]; then rm -f *.tar.gz; fi
 deploy:
-  provider: pages
+  provider: releases
   skip_cleanup: yes
-  keep_history: yes
-  local_dir: docs
-  'on':
-    branch: master
   token: $GITHUB_TOKEN
+  file_glob: yes
+  overwrite: yes
+  file: ${PACKAGE_NAME}*.t*gz
+  'on':
+    tags: yes
+after_deploy:
+  - echo "${PROJECT_NAME}" | grep -q "releases"; if [[ $? -eq 0 ]]; then run_coverage="false";
+    else run_coverage=; fi;
+  - if [[ "${TRAVIS_OS_NAME}" == "linux" && ${TRAVIS_R_VERSION_STRING} = "release"
+    && -z "${run_coverage}" ]]; then echo 'covr::coveralls(type = "all", quiet = FALSE)'
+    > neuroc_covr.R ; travis_wait 100 Rscript neuroc_covr.R ; rm neuroc_covr.R ; fi
 
 # neuroc.deps commit id:d4f3864
