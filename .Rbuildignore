@@ -4,8 +4,10 @@
 ^\.covrignore$
 ^README.Rmd$
 ^standalone$
+^clients$
+^scripts$
 ^revdep$
+^inst/include/RNiftiAPI.h.in$
+^src/main.cpp.in$
 ^DESCRIPTION\.bak$
 ^\./\.travis\.yml\.bak$
-^appveyor\.yml$
-^\./appveyor\.yml\.bak$
