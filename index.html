@@ -151,13 +151,13 @@
 <span class="no">image</span>$<span class="no">intent_code</span>
 <span class="co">## [1] 1</span></pre></div>
 <p>If you need to modify multiple metadata elements at once, or replace metadata wholesale with new information from another image, the <code>asNifti</code> function provides a more efficient interface. See <code><a href="https://rdrr.io/pkg/RNifti/man/asNifti.html">?asNifti</a></code> for details.</p>
-<p>An image can be written back to NIfTI-1 format using the <code>writeNifti</code> function. <code>gzip</code> compression will be used if the specified file name ends with â.gzâ.</p>
+<p>An image can be written back to NIfTI-1 format using the <code>writeNifti</code> function. <code>gzip</code> compression will be used if the specified file name ends with “.gz”.</p>
 <div class="sourceCode" id="cb7"><pre class="r"><span class="fu"><a href="https://rdrr.io/pkg/RNifti/man/writeNifti.html">writeNifti</a></span>(<span class="no">image</span>, <span class="st">"file.nii.gz"</span>)</pre></div>
 </div>
 <div id="image-orientation" class="section level2">
 <h2 class="hasAnchor">
 <a href="#image-orientation" class="anchor"></a>Image orientation</h2>
-<p>The NIfTI-1 format has a mechanism for indicating the physical orientation and location of the image volume in real space. The reference orientation has the leftâright direction aligned with the x-axis, the posteriorâanterior (backâfront) direction aligned with the y-axis, and the inferiorâsuperior (bottomâtop) direction aligned with the z-axis; but âxformâ information stored with an image can describe a transformation from that coordinate system to the one used by that particular image, in the form of an affine matrix. To obtain the full xform matrix for an image, call the <code>xform</code> function:</p>
+<p>The NIfTI-1 format has a mechanism for indicating the physical orientation and location of the image volume in real space. The reference orientation has the left–right direction aligned with the x-axis, the posterior–anterior (back–front) direction aligned with the y-axis, and the inferior–superior (bottom–top) direction aligned with the z-axis; but “xform” information stored with an image can describe a transformation from that coordinate system to the one used by that particular image, in the form of an affine matrix. To obtain the full xform matrix for an image, call the <code>xform</code> function:</p>
 <div class="sourceCode" id="cb8"><pre class="r"><span class="fu"><a href="https://rdrr.io/pkg/RNifti/man/xform.html">xform</a></span>(<span class="no">image</span>)
 <span class="co">##      [,1] [,2] [,3]      [,4]</span>
 <span class="co">## [1,] -2.5  0.0  0.0 122.03390</span>
@@ -175,7 +175,7 @@
 <p>In this case, the image is flipped along the x-axis relative to the canonical axes, so the positive x-direction points towards the left rather than the right. This is compactly represented by the output of the <code>orientation</code> function, which indicates the approximate real-world directions of the positive axes in each dimension.</p>
 <div class="sourceCode" id="cb10"><pre class="r"><span class="fu"><a href="https://rdrr.io/pkg/RNifti/man/xform.html">orientation</a></span>(<span class="no">image</span>)
 <span class="co">## [1] "LAS"</span></pre></div>
-<p>So, here, âLASâ means that the positive x-axis points left, the positive y-axis anterior and the positive z-axis superior. This is the so-called âradiologicalâ orientation convention, and can be requested when viewing images for those who are used to it:</p>
+<p>So, here, “LAS” means that the positive x-axis points left, the positive y-axis anterior and the positive z-axis superior. This is the so-called “radiological” orientation convention, and can be requested when viewing images for those who are used to it:</p>
 <div class="sourceCode" id="cb11"><pre class="r"><span class="fu"><a href="https://rdrr.io/pkg/RNifti/man/view.html">view</a></span>(<span class="no">image</span>, <span class="kw">radiological</span><span class="kw">=</span><span class="fl">TRUE</span>)</pre></div>
 <p><img src="tools/figures/unnamed-chunk-12-1.png" alt="plot of chunk unnamed-chunk-12"></p>
 <p>Notice the left (L) and right (R) labels, relative to the view shown above. Setting the <code>radiologicalView</code> option to <code>TRUE</code> will make this the default for all future views.</p>
@@ -210,7 +210,7 @@
 <span class="co">## - 2.5 x 2.5 x 2.5 mm per voxel</span>
 <span class="no">complexImage</span>[<span class="fl">50</span>,<span class="fl">39</span>,<span class="fl">23</span>]
 <span class="co">## [1] 300+0i</span></pre></div>
-<p>Râs native representation for RGB values is <a href="https://en.wikipedia.org/wiki/Web_colors">CSS-style hex strings</a> of character mode, which are reasonably space-efficient (8 or 10 bytes per value) but a little clunky to work with. For efficiency of interchange between R and the NIfTI-internal datatypes, <code>RNifti</code> uses a byte-packed representation of integer mode instead, which takes up 4 bytes per value. Of course, the viewer understands this format.</p>
+<p>R’s native representation for RGB values is <a href="https://en.wikipedia.org/wiki/Web_colors">CSS-style hex strings</a> of character mode, which are reasonably space-efficient (8 or 10 bytes per value) but a little clunky to work with. For efficiency of interchange between R and the NIfTI-internal datatypes, <code>RNifti</code> uses a byte-packed representation of integer mode instead, which takes up 4 bytes per value. Of course, the viewer understands this format.</p>
 <div class="sourceCode" id="cb14"><pre class="r"><span class="no">rgbImage</span> <span class="kw">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/RNifti/man/readNifti.html">readNifti</a></span>(<span class="fu"><a href="https://rdrr.io/r/base/system.file.html">system.file</a></span>(<span class="st">"extdata"</span>, <span class="st">"example_rgb.nii.gz"</span>, <span class="kw">package</span><span class="kw">=</span><span class="st">"RNifti"</span>))
 <span class="fu"><a href="https://rdrr.io/r/base/print.html">print</a></span>(<span class="no">rgbImage</span>)
 <span class="co">## Image array of mode "integer" (2.1 Mb)</span>
@@ -220,7 +220,7 @@
 <span class="co">## [1] "niftiImage" "rgbArray"   "array"</span>
 <span class="fu"><a href="https://rdrr.io/pkg/RNifti/man/view.html">view</a></span>(<span class="no">rgbImage</span>)</pre></div>
 <p><img src="tools/figures/unnamed-chunk-15-1.png" alt="plot of chunk unnamed-chunk-15"></p>
-<p>Notice that values are shown in the viewer using Râs conventional hex string format, but the data is of class <code>rgbArray</code>. The function of the same name can be used to create these arrays from strings or channel values, for the purposes of building RGB images from data, while the <code>as.character</code> method and <code>channels</code> function perform the opposite conversions.</p>
+<p>Notice that values are shown in the viewer using R’s conventional hex string format, but the data is of class <code>rgbArray</code>. The function of the same name can be used to create these arrays from strings or channel values, for the purposes of building RGB images from data, while the <code>as.character</code> method and <code>channels</code> function perform the opposite conversions.</p>
 <div class="sourceCode" id="cb15"><pre class="r"><span class="fu"><a href="https://rdrr.io/r/base/character.html">as.character</a></span>(<span class="no">rgbImage</span>, <span class="kw">flatten</span><span class="kw">=</span><span class="fl">FALSE</span>)[<span class="fl">50</span>,<span class="fl">39</span>,<span class="fl">23</span>]
 <span class="co">## [1] "#1F5B8A"</span>
 <span class="fu"><a href="https://rdrr.io/pkg/RNifti/man/channels.html">channels</a></span>(<span class="no">rgbImage</span>, <span class="st">"red"</span>)[<span class="fl">50</span>,<span class="fl">39</span>,<span class="fl">23</span>,<span class="fl">1</span>]
@@ -263,21 +263,21 @@
 <span class="co">##   0.3028081  0.2976415  0.3680695    0.768533   100</span>
 <span class="co">##  26.8987791 10.4609615 13.3785205  180.474982   100</span></pre></div>
 <p>With a median runtime of less than 2 ms, <code>RNifti</code> is typically around ten times as fast as the alternatives to read this image into R. The exception is <code>ANTsRCore</code>, which uses a similar low-level pointer-based arrangement as <code>RNifti</code>, and is therefore comparable in speed. However, <code>ANTsR</code> has substantial dependencies, which may affect its suitability in some applications.</p>
-<p>Moreover, when reading the file into an âinternalâ image, which does not copy the pixel values into R data structures until they are required, the median runtime drops by a further 80%, to just 300 Âµs. This saves time and memory, while still allowing data access through standard R indexing operations.</p>
+<p>Moreover, when reading the file into an “internal” image, which does not copy the pixel values into R data structures until they are required, the median runtime drops by a further 80%, to just 300 µs. This saves time and memory, while still allowing data access through standard R indexing operations.</p>
 </div>
 <div id="implementation-details" class="section level2">
 <h2 class="hasAnchor">
 <a href="#implementation-details" class="anchor"></a>Implementation details</h2>
-<p>The package does not fully duplicate the NIfTI-1 structureâs contents in R-visible objects. Instead, it passes key metadata back to R, such as the image dimensions and pixel dimensions, and it also passes back the pixel values where they are needed. Finally, it creates an <a href="http://r-manuals.flakery.org/R-exts.html#External-pointers-and-weak-references">external pointer</a> to the native data structure, which is stored in an attribute. This pointer is dereferenced whenever the object is passed back to the C++ code, thereby avoiding unnecessary duplication and ensuring that all metadata remains intact. The full NIfTI-1 header can be obtained using the <code>niftiHeader</code> R function, if it is needed.</p>
-<p>This arrangement is efficient and generally works well, but many R operations strip attributesâin which case the external pointer will be removed. The internal structure will be built again when necessary, but using default metadata. In these cases, if it is important to keep the original metadata, the <code>asNifti</code> function should be called explicitly, with a template object. This reconstructs the NIfTI-1 data structure, using the template as a starting point.</p>
+<p>The package does not fully duplicate the NIfTI-1 structure’s contents in R-visible objects. Instead, it passes key metadata back to R, such as the image dimensions and pixel dimensions, and it also passes back the pixel values where they are needed. Finally, it creates an <a href="http://r-manuals.flakery.org/R-exts.html#External-pointers-and-weak-references">external pointer</a> to the native data structure, which is stored in an attribute. This pointer is dereferenced whenever the object is passed back to the C++ code, thereby avoiding unnecessary duplication and ensuring that all metadata remains intact. The full NIfTI-1 header can be obtained using the <code>niftiHeader</code> R function, if it is needed.</p>
+<p>This arrangement is efficient and generally works well, but many R operations strip attributes—in which case the external pointer will be removed. The internal structure will be built again when necessary, but using default metadata. In these cases, if it is important to keep the original metadata, the <code>asNifti</code> function should be called explicitly, with a template object. This reconstructs the NIfTI-1 data structure, using the template as a starting point.</p>
 </div>
 <div id="api" class="section level2">
 <h2 class="hasAnchor">
 <a href="#api" class="anchor"></a>API</h2>
-<p>It is possible to use the packageâs NIfTI-handling code in other R packagesâ compiled code, thereby obviating the need to duplicate the reference implementation. Moreover, <code>RNifti</code> provides two key C++ wrapper classes:</p>
+<p>It is possible to use the package’s NIfTI-handling code in other R packages’ compiled code, thereby obviating the need to duplicate the reference implementation. Moreover, <code>RNifti</code> provides two key C++ wrapper classes:</p>
 <ul>
 <li>
-<code>NiftiImage</code>, which simplifies memory management and supports the packageâs internal image pointers and associated reference counting, and</li>
+<code>NiftiImage</code>, which simplifies memory management and supports the package’s internal image pointers and associated reference counting, and</li>
 <li>
 <code>NiftiImageData</code>, which encapsulates the pixel data within an image, and handles datatype multiplexing and data scaling, as well as providing indexing, iterators and other niceties.</li>
 </ul>
@@ -292,10 +292,10 @@
 <a class="sourceLine" id="cb18-5" data-line-number="5">    RNifti::NiftiImage image(<span class="st">"example.nii.gz"</span>);</a>
 <a class="sourceLine" id="cb18-6" data-line-number="6">    <span class="co">// Do something with the image</span></a>
 <a class="sourceLine" id="cb18-7" data-line-number="7">}</a></code></pre></div>
-<p>If youâre using the <code>sourceCpp</code> function from <code>Rcpp</code>, you may also need to add the attribute line</p>
+<p>If you’re using the <code>sourceCpp</code> function from <code>Rcpp</code>, you may also need to add the attribute line</p>
 <div class="sourceCode" id="cb19"><pre class="sourceCode cpp"><code class="sourceCode cpp"><a class="sourceLine" id="cb19-1" data-line-number="1"><span class="co">// [[Rcpp::depends(RNifti)]]</span></a></code></pre></div>
 <p>to the top of your C++ source file.</p>
-<p>In addition to the one taking a file path, there are also constructors taking a <code>SEXP</code> (i.e., an R object), another <code>NiftiImage</code>, or a <code>nifti_image</code> structure from the reference implementation. <code>NiftiImage</code> objects can be implicitly cast to pointers to <code>nifti_image</code> structs, meaning that they can be directly used in calls to the reference implementationâs own API. The latter is accessed through the separate <code>RNiftiAPI.h</code> header file.</p>
+<p>In addition to the one taking a file path, there are also constructors taking a <code>SEXP</code> (i.e., an R object), another <code>NiftiImage</code>, or a <code>nifti_image</code> structure from the reference implementation. <code>NiftiImage</code> objects can be implicitly cast to pointers to <code>nifti_image</code> structs, meaning that they can be directly used in calls to the reference implementation’s own API. The latter is accessed through the separate <code>RNiftiAPI.h</code> header file.</p>
 <div class="sourceCode" id="cb20"><pre class="sourceCode cpp"><code class="sourceCode cpp"><a class="sourceLine" id="cb20-1" data-line-number="1"><span class="pp">#include </span><span class="im">"RNifti.h"</span></a>
 <a class="sourceLine" id="cb20-2" data-line-number="2"><span class="pp">#include </span><span class="im">"RNiftiAPI.h"</span></a>
 <a class="sourceLine" id="cb20-3" data-line-number="3"></a>
@@ -304,7 +304,7 @@
 <a class="sourceLine" id="cb20-6" data-line-number="6">    RNifti::NiftiImage image(<span class="va">image_</span>);</a>
 <a class="sourceLine" id="cb20-7" data-line-number="7">    <span class="at">const</span> <span class="dt">size_t</span> volsize = nifti_get_volsize(image);</a>
 <a class="sourceLine" id="cb20-8" data-line-number="8">}</a></code></pre></div>
-<p>(<code>RNifti</code> will also have to be added to the <code>Imports</code> list in the packageâs <code>DESCRIPTION</code> file, as well as <code>LinkingTo</code>.) The <code>RNiftiAPI.h</code> header should only be included once per package, since it contains function implementations. Multiple includes will lead to duplicate symbol warnings from your linker. Therefore, if multiple source files require access to the NIfTI-1 reference implementation, it is recommended that the API header be included alone in a separate â.câ or â.cppâ file, while others only include the main <code>RNifti.h</code>.</p>
+<p>(<code>RNifti</code> will also have to be added to the <code>Imports</code> list in the package’s <code>DESCRIPTION</code> file, as well as <code>LinkingTo</code>.) The <code>RNiftiAPI.h</code> header should only be included once per package, since it contains function implementations. Multiple includes will lead to duplicate symbol warnings from your linker. Therefore, if multiple source files require access to the NIfTI-1 reference implementation, it is recommended that the API header be included alone in a separate “.c” or “.cpp” file, while others only include the main <code>RNifti.h</code>.</p>
 <p><code>RNifti</code> is not specifically designed to be thread-safe, and R itself is expressly single-threaded. However, some effort has been made to try to minimise problems associated with parallelisation, such as putting R API calls within a critical region if OpenMP is being used. If you are using the API in a package that does use OpenMP or another form of threads, it is wise to preregister the functions exported by <code>RNifti</code> before use, by calling <code>niftilib_register_all()</code>. In single-threaded contexts this is optional, and will be performed when required.</p>
 </div>
 <div id="use-in-pure-c-projects" class="section level2">
@@ -368,7 +368,7 @@
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.0.9000.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.1.9000.</p>
 </div>
 
       </footer>
