@@ -119,11 +119,11 @@ click-to-navigate interactivity." />
 click-to-navigate interactivity.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>view</span>(<span class='no'>...</span>, <span class='kw'>point</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>radiological</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/options.html'>getOption</a></span>(<span class='st'>"radiologicalView"</span>,
-  <span class='fl'>FALSE</span>), <span class='kw'>interactive</span> <span class='kw'>=</span> <span class='kw pkg'>base</span><span class='kw ns'>::</span><span class='fu'><a href='https://rdrr.io/r/base/interactive.html'>interactive</a></span>(), <span class='kw'>crosshairs</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
-  <span class='kw'>labels</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>infoPanel</span> <span class='kw'>=</span> <span class='no'>defaultInfoPanel</span>)
+    <pre class="usage"><span class='fu'><a href='https://rdrr.io/pkg/RNifti/man/view.html'>view</a></span>(<span class='kw'>...</span>, point = <span class='kw'>NULL</span>, radiological = <span class='fu'><a href='https://rdrr.io/r/base/options.html'>getOption</a></span>(<span class='st'>"radiologicalView"</span>,
+  <span class='fl'>FALSE</span>), interactive = <span class='kw'>base</span>::<span class='fu'><a href='https://rdrr.io/r/base/interactive.html'>interactive</a></span>(), crosshairs = <span class='fl'>TRUE</span>,
+  labels = <span class='fl'>TRUE</span>, infoPanel = <span class='kw'>defaultInfoPanel</span>)
 
-<span class='fu'>lyr</span>(<span class='no'>image</span>, <span class='kw'>scale</span> <span class='kw'>=</span> <span class='st'>"grey"</span>, <span class='kw'>min</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>max</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>mask</span> <span class='kw'>=</span> <span class='kw'>NULL</span>)</pre>
+<span class='fu'><a href='https://rdrr.io/pkg/RNifti/man/view.html'>lyr</a></span>(<span class='kw'>image</span>, scale = <span class='st'>"grey"</span>, min = <span class='kw'>NULL</span>, max = <span class='kw'>NULL</span>, mask = <span class='kw'>NULL</span>)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -165,7 +165,7 @@ orientation information is not available.</p></td>
     <tr>
       <th>infoPanel</th>
       <td><p>A function of three arguments, which must produce a plot
-for the information panel of the view. <code>defaultInfoPanel</code> is
+for the information panel of the view. <code><a href='https://rdrr.io/pkg/RNifti/man/defaultInfoPanel.html'>defaultInfoPanel</a></code> is
 the default, which shows the labels and values of each image at the
 current point. A <code>NULL</code> value will suppress the panel.</p></td>
     </tr>
@@ -217,16 +217,15 @@ will not affect auto-windowing.</p></td>
   underlying core function.</p>
     <h2 class="hasAnchor" id="see-also"><a class="anchor" href="#see-also"></a>See also</h2>
 
-    <div class='dont-index'><p><code>defaultInfoPanel</code>, <code>orientation</code>,
+    <div class='dont-index'><p><code><a href='https://rdrr.io/pkg/RNifti/man/defaultInfoPanel.html'>defaultInfoPanel</a></code>, <code><a href='https://rdrr.io/pkg/RNifti/man/xform.html'>orientation</a></code>,
   <code><a href='https://rdrr.io/r/graphics/locator.html'>locator</a></code></p></div>
     <h2 class="hasAnchor" id="author"><a class="anchor" href="#author"></a>Author</h2>
 
     <p>Jon Clayden &lt;code@clayden.org&gt;</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='no'>im</span> <span class='kw'>&lt;-</span> <span class='fu'>readNifti</span>(<span class='fu'><a href='https://rdrr.io/r/base/system.file.html'>system.file</a></span>(<span class='st'>"extdata"</span>, <span class='st'>"example.nii.gz"</span>, <span class='kw'>package</span><span class='kw'>=</span><span class='st'>"RNifti"</span>))
-<span class='fu'>view</span>(<span class='no'>im</span>, <span class='kw'>interactive</span><span class='kw'>=</span><span class='fl'>FALSE</span>)</div><div class='img'><img src='view-1.png' alt='' width='700' height='433' /></div><div class='input'><span class='fu'>view</span>(<span class='fu'>lyr</span>(<span class='no'>im</span>, <span class='kw'>max</span><span class='kw'>=</span><span class='fl'>800</span>), <span class='kw'>interactive</span><span class='kw'>=</span><span class='fl'>FALSE</span>)</div><div class='img'><img src='view-2.png' alt='' width='700' height='433' /></div><div class='input'><span class='fu'>view</span>(<span class='fu'>lyr</span>(<span class='no'>im</span>, <span class='kw'>mask</span><span class='kw'>=</span><span class='no'>im</span><span class='kw'>&lt;</span><span class='fl'>800</span>), <span class='kw'>interactive</span><span class='kw'>=</span><span class='fl'>FALSE</span>)</div><div class='img'><img src='view-3.png' alt='' width='700' height='433' /></div><div class='input'>
-</div></pre>
+    <pre class="examples"><div class='input'><span class='kw'>im</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/pkg/RNifti/man/readNifti.html'>readNifti</a></span>(<span class='fu'><a href='https://rdrr.io/r/base/system.file.html'>system.file</a></span>(<span class='st'>"extdata"</span>, <span class='st'>"example.nii.gz"</span>, package=<span class='st'>"RNifti"</span>))
+<span class='fu'><a href='https://rdrr.io/pkg/RNifti/man/view.html'>view</a></span>(<span class='kw'>im</span>, interactive=<span class='fl'>FALSE</span>)</div><div class='img'><img src='view-1.png' alt='' width='700' height='433' /></div><div class='input'><span class='fu'><a href='https://rdrr.io/pkg/RNifti/man/view.html'>view</a></span>(<span class='fu'><a href='https://rdrr.io/pkg/RNifti/man/view.html'>lyr</a></span>(<span class='kw'>im</span>, max=<span class='fl'>800</span>), interactive=<span class='fl'>FALSE</span>)</div><div class='img'><img src='view-2.png' alt='' width='700' height='433' /></div><div class='input'><span class='fu'><a href='https://rdrr.io/pkg/RNifti/man/view.html'>view</a></span>(<span class='fu'><a href='https://rdrr.io/pkg/RNifti/man/view.html'>lyr</a></span>(<span class='kw'>im</span>, mask=<span class='kw'>im</span><span class='op'>&lt;</span><span class='fl'>800</span>), interactive=<span class='fl'>FALSE</span>)</div><div class='img'><img src='view-3.png' alt='' width='700' height='433' /></div><div class='input'></div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">

@@ -123,22 +123,22 @@ be used where information is missing, but no processing is performed on the
 metadata.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>niftiHeader</span>(<span class='kw'>image</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>())
+    <pre class="usage"><span class='fu'><a href='https://rdrr.io/pkg/RNifti/man/niftiHeader.html'>niftiHeader</a></span>(image = <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>())
 
-<span class='fu'>analyzeHeader</span>(<span class='kw'>image</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>())
+<span class='fu'><a href='https://rdrr.io/pkg/RNifti/man/niftiHeader.html'>analyzeHeader</a></span>(image = <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>())
 
 <span class='co'># S3 method for niftiHeader</span>
-<span class='fu'><a href='https://rdrr.io/r/base/print.html'>print</a></span>(<span class='no'>x</span>, <span class='no'>...</span>)
+<span class='fu'><a href='https://rdrr.io/r/base/print.html'>print</a></span>(<span class='kw'>x</span>, <span class='kw'>...</span>)
 
 <span class='co'># S3 method for analyzeHeader</span>
-<span class='fu'><a href='https://rdrr.io/r/base/print.html'>print</a></span>(<span class='no'>x</span>, <span class='no'>...</span>)</pre>
+<span class='fu'><a href='https://rdrr.io/r/base/print.html'>print</a></span>(<span class='kw'>x</span>, <span class='kw'>...</span>)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>image</th>
-      <td><p>An image, in any acceptable form (see <code>asNifti</code>).
+      <td><p>An image, in any acceptable form (see <code><a href='https://rdrr.io/pkg/RNifti/man/asNifti.html'>asNifti</a></code>).
 A list containing partial header information is acceptable, including an
 empty list, which returns defaults for every field.</p></td>
     </tr>
@@ -176,13 +176,13 @@ soft-deprecated.</p>
     <p>The NIfTI-1 standard (<a href='http://www.nitrc.org/docman/view.php/26/64/nifti1.h'>http://www.nitrc.org/docman/view.php/26/64/nifti1.h</a>).</p>
     <h2 class="hasAnchor" id="see-also"><a class="anchor" href="#see-also"></a>See also</h2>
 
-    <div class='dont-index'><p><code>niftiVersion</code></p></div>
+    <div class='dont-index'><p><code><a href='https://rdrr.io/pkg/RNifti/man/niftiVersion.html'>niftiVersion</a></code></p></div>
     <h2 class="hasAnchor" id="author"><a class="anchor" href="#author"></a>Author</h2>
 
     <p>Jon Clayden &lt;code@clayden.org&gt;</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='fu'>niftiHeader</span>(<span class='fu'><a href='https://rdrr.io/r/base/system.file.html'>system.file</a></span>(<span class='st'>"extdata"</span>, <span class='st'>"example.nii.gz"</span>, <span class='kw'>package</span><span class='kw'>=</span><span class='st'>"RNifti"</span>))</div><div class='output co'>#&gt; NIfTI-1 header
+    <pre class="examples"><div class='input'><span class='fu'><a href='https://rdrr.io/pkg/RNifti/man/niftiHeader.html'>niftiHeader</a></span>(<span class='fu'><a href='https://rdrr.io/r/base/system.file.html'>system.file</a></span>(<span class='st'>"extdata"</span>, <span class='st'>"example.nii.gz"</span>, package=<span class='st'>"RNifti"</span>))</div><div class='output co'>#&gt; NIfTI-1 header
 #&gt;     sizeof_hdr: 348
 #&gt;       dim_info: 0
 #&gt;            dim: 3  96  96  60  1  1  1  1
@@ -220,7 +220,7 @@ soft-deprecated.</p>
 #&gt;    intent_name: 
 #&gt;          magic: n+1</div><div class='input'>
 <span class='co'># Default header for a standard R array</span>
-<span class='fu'>niftiHeader</span>(<span class='fu'><a href='https://rdrr.io/r/base/array.html'>array</a></span>(<span class='fl'>0L</span>, <span class='kw'>dim</span><span class='kw'>=</span><span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>10</span>,<span class='fl'>10</span>)))</div><div class='output co'>#&gt; NIfTI-1 header
+<span class='fu'><a href='https://rdrr.io/pkg/RNifti/man/niftiHeader.html'>niftiHeader</a></span>(<span class='fu'><a href='https://rdrr.io/r/base/array.html'>array</a></span>(<span class='fl'>0L</span>, dim=<span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>10</span>,<span class='fl'>10</span>)))</div><div class='output co'>#&gt; NIfTI-1 header
 #&gt;     sizeof_hdr: 348
 #&gt;       dim_info: 0
 #&gt;            dim: 2  10  10  1  1  1  1  1
@@ -256,8 +256,7 @@ soft-deprecated.</p>
 #&gt;         srow_y: 0  0  0  0
 #&gt;         srow_z: 0  0  0  0
 #&gt;    intent_name: 
-#&gt;          magic: n+1</div><div class='input'>
-</div></pre>
+#&gt;          magic: n+1</div><div class='input'></div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">

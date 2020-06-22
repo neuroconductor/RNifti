@@ -119,14 +119,16 @@ C library." />
 C library.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>writeNifti</span>(<span class='no'>image</span>, <span class='no'>file</span>, <span class='kw'>template</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>datatype</span> <span class='kw'>=</span> <span class='st'>"auto"</span>)</pre>
+    <pre class="usage"><span class='fu'><a href='https://rdrr.io/pkg/RNifti/man/writeNifti.html'>writeNifti</a></span>(<span class='kw'>image</span>, <span class='kw'>file</span>, template = <span class='kw'>NULL</span>, datatype = <span class='st'>"auto"</span>)
+
+<span class='fu'><a href='https://rdrr.io/pkg/RNifti/man/writeNifti.html'>writeAnalyze</a></span>(<span class='kw'>image</span>, <span class='kw'>file</span>, template = <span class='kw'>NULL</span>, datatype = <span class='st'>"auto"</span>)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>image</th>
-      <td><p>An image, in any acceptable form (see <code>asNifti</code>).</p></td>
+      <td><p>An image, in any acceptable form (see <code><a href='https://rdrr.io/pkg/RNifti/man/asNifti.html'>asNifti</a></code>).</p></td>
     </tr>
     <tr>
       <th>file</th>
@@ -135,7 +137,7 @@ C library.</p>
     <tr>
       <th>template</th>
       <td><p>An optional template object to derive NIfTI-1 properties
-from. Passed to <code>asNifti</code> if <code>image</code> is an array.</p></td>
+from. Passed to <code><a href='https://rdrr.io/pkg/RNifti/man/asNifti.html'>asNifti</a></code> if <code>image</code> is an array.</p></td>
     </tr>
     <tr>
       <th>datatype</th>
@@ -152,13 +154,14 @@ done to ensure that the coercion maintains precision.</p></td>
     <p>The NIfTI-1 standard (<a href='http://www.nitrc.org/docman/view.php/26/64/nifti1.h'>http://www.nitrc.org/docman/view.php/26/64/nifti1.h</a>).</p>
     <h2 class="hasAnchor" id="see-also"><a class="anchor" href="#see-also"></a>See also</h2>
 
-    <div class='dont-index'><p><code>readNifti</code>, <code>asNifti</code></p></div>
+    <div class='dont-index'><p><code><a href='https://rdrr.io/pkg/RNifti/man/readNifti.html'>readNifti</a></code>, <code><a href='https://rdrr.io/pkg/RNifti/man/asNifti.html'>asNifti</a></code></p></div>
     <h2 class="hasAnchor" id="author"><a class="anchor" href="#author"></a>Author</h2>
 
     <p>Jon Clayden &lt;code@clayden.org&gt;</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='kw'>if</span> (<span class='fl'>FALSE</span>) <span class='fu'>writeNifti</span>(<span class='no'>im</span>, <span class='st'>"image.nii.gz"</span>, <span class='kw'>datatype</span><span class='kw'>=</span><span class='st'>"float"</span>)</div></pre>
+    <pre class="examples"><div class='input'><span class='co'>if</span> (<span class='fl'>FALSE</span>) <span class='fu'><a href='https://rdrr.io/pkg/RNifti/man/writeNifti.html'>writeNifti</a></span>(<span class='kw'>im</span>, <span class='st'>"image.nii.gz"</span>, datatype=<span class='st'>"float"</span>)
+</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">

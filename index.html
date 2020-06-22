@@ -86,29 +86,38 @@
 <li>modest dependencies, consisting of only R itself and the very widely-used <a href="https://cran.r-project.org/package=Rcpp">Rcpp</a> C++ wrapper library.</li>
 </ul>
 <p>The latest development version of the package can always be installed from GitHub using the <code>remotes</code> package.</p>
-<div class="sourceCode" id="cb1"><pre class="r"><span class="co">## install.packages("remotes")</span>
-<span class="kw pkg">remotes</span><span class="kw ns">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html">install_github</a></span>(<span class="st">"jonclayden/RNifti"</span>)</pre></div>
+<div class="sourceCode" id="cb1"><pre class="downlit">
+<span class="co">## install.packages("remotes")</span>
+<span class="kw">remotes</span>::<span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html">install_github</a></span>(<span class="st">"jonclayden/RNifti"</span>)
+</pre></div>
 <p><strong>Please note that the <code>RNifti</code> package is to be used for research purposes only, and is not a clinical tool. It comes with no warranty.</strong></p>
 <div id="usage" class="section level2">
 <h2 class="hasAnchor">
 <a href="#usage" class="anchor"></a>Usage</h2>
 <p>The primary role of <code>RNifti</code> is in reading and writing NIfTI-1 files, either <code>gzip</code>-compressed or uncompressed, and providing access to image data and metadata. An image may be read into R using the <code>readNifti</code> function.</p>
-<div class="sourceCode" id="cb2"><pre class="r"><span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="no">RNifti</span>)
-<span class="no">image</span> <span class="kw">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/RNifti/man/readNifti.html">readNifti</a></span>(<span class="fu"><a href="https://rdrr.io/r/base/system.file.html">system.file</a></span>(<span class="st">"extdata"</span>, <span class="st">"example.nii.gz"</span>, <span class="kw">package</span><span class="kw">=</span><span class="st">"RNifti"</span>))</pre></div>
-<p>This image is an R array with some additional attributes containing information such as its dimensions and the size of its pixels (or voxels, in this case, since it is a 3D image). There are auxiliary functions for extracting this information: the standard <code><a href="https://rdrr.io/r/base/dim.html">dim()</a></code>, plus <code><a href="https://rdrr.io/pkg/RNifti/man/pixdim.html">pixdim()</a></code> and <code><a href="https://rdrr.io/pkg/RNifti/man/pixdim.html">pixunits()</a></code>.</p>
-<div class="sourceCode" id="cb3"><pre class="r"><span class="fu"><a href="https://rdrr.io/r/base/dim.html">dim</a></span>(<span class="no">image</span>)
+<div class="sourceCode" id="cb2"><pre class="downlit">
+<span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="kw"><a href="https://github.com/jonclayden/RNifti">RNifti</a></span>)
+<span class="kw">image</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/readNifti.html">readNifti</a></span>(<span class="fu"><a href="https://rdrr.io/r/base/system.file.html">system.file</a></span>(<span class="st">"extdata"</span>, <span class="st">"example.nii.gz"</span>, package=<span class="st">"RNifti"</span>))
+</pre></div>
+<p>This image is an R array with some additional attributes containing information such as its dimensions and the size of its pixels (or voxels, in this case, since it is a 3D image). There are auxiliary functions for extracting this information: the standard <code><a href="https://rdrr.io/r/base/dim.html">dim()</a></code>, plus <code><a href="reference/pixdim.html">pixdim()</a></code> and <code><a href="reference/pixdim.html">pixunits()</a></code>.</p>
+<div class="sourceCode" id="cb3"><pre class="downlit">
+<span class="fu"><a href="https://rdrr.io/r/base/dim.html">dim</a></span>(<span class="kw">image</span>)
 <span class="co">## [1] 96 96 60</span>
-<span class="fu"><a href="https://rdrr.io/pkg/RNifti/man/pixdim.html">pixdim</a></span>(<span class="no">image</span>)
+<span class="fu"><a href="reference/pixdim.html">pixdim</a></span>(<span class="kw">image</span>)
 <span class="co">## [1] 2.5 2.5 2.5</span>
-<span class="fu"><a href="https://rdrr.io/pkg/RNifti/man/pixdim.html">pixunits</a></span>(<span class="no">image</span>)
-<span class="co">## [1] "mm" "s"</span></pre></div>
+<span class="fu"><a href="reference/pixdim.html">pixunits</a></span>(<span class="kw">image</span>)
+<span class="co">## [1] "mm" "s"</span>
+</pre></div>
 <p>So this image is of size 96 x 96 x 60 voxels, with each voxel representing 2.5 x 2.5 x 2.5 mm in real space. (The temporal unit, seconds here, only applies to the fourth dimension, if it is present.) Replacement versions of the latter functions are also available, for modifying the metadata.</p>
 <p>The package contains a basic image viewer, which can be used interactively or noninteractively to examine 2D or 3D images.</p>
-<div class="sourceCode" id="cb4"><pre class="r"><span class="fu"><a href="https://rdrr.io/pkg/RNifti/man/view.html">view</a></span>(<span class="no">image</span>)</pre></div>
+<div class="sourceCode" id="cb4"><pre class="downlit">
+<span class="fu"><a href="reference/view.html">view</a></span>(<span class="kw">image</span>)
+</pre></div>
 <p><img src="tools/figures/unnamed-chunk-5-1.png" alt="plot of chunk unnamed-chunk-5"></p>
-<p>By default, the viewer shows labels indicating <a href="#image-orientation">image orientation</a>, crosshairs pinpointing the currently selected location, the numerical indices of the current location, and the value of the image at that location. Options allow each of these to be turned off, for the content of the bottom-right panel to be customised entirely, for the colour scale to be changed, and for additional images to be layered on top of the base image. See <code><a href="https://rdrr.io/pkg/RNifti/man/view.html">?view</a></code> for details.</p>
+<p>By default, the viewer shows labels indicating <a href="#image-orientation">image orientation</a>, crosshairs pinpointing the currently selected location, the numerical indices of the current location, and the value of the image at that location. Options allow each of these to be turned off, for the content of the bottom-right panel to be customised entirely, for the colour scale to be changed, and for additional images to be layered on top of the base image. See <code><a href="reference/view.html">?view</a></code> for details.</p>
 <p>A fuller list of the raw metadata stored in the file can be obtained using the <code>niftiHeader</code> function.</p>
-<div class="sourceCode" id="cb5"><pre class="r"><span class="fu"><a href="https://rdrr.io/pkg/RNifti/man/niftiHeader.html">niftiHeader</a></span>(<span class="no">image</span>)
+<div class="sourceCode" id="cb5"><pre class="downlit">
+<span class="fu"><a href="reference/niftiHeader.html">niftiHeader</a></span>(<span class="kw">image</span>)
 <span class="co">## NIfTI-1 header</span>
 <span class="co">##     sizeof_hdr: 348</span>
 <span class="co">##       dim_info: 0</span>
@@ -145,45 +154,59 @@
 <span class="co">##         srow_y: 0.00000  2.50000  0.00000  -95.18523</span>
 <span class="co">##         srow_z: 0.00000  0.00000  2.50000  -55.03814</span>
 <span class="co">##    intent_name: </span>
-<span class="co">##          magic: n+1</span></pre></div>
+<span class="co">##          magic: n+1</span>
+</pre></div>
 <p>Advanced users who know the NIfTI format well may want to alter elements of this metadata directly, and this can be performed using the <code><a href="https://rdrr.io/r/base/Extract.html">$</a></code> operator shorthand, as in</p>
-<div class="sourceCode" id="cb6"><pre class="r"><span class="no">image</span>$<span class="no">intent_code</span> <span class="kw">&lt;-</span> <span class="fl">1</span>
-<span class="no">image</span>$<span class="no">intent_code</span>
-<span class="co">## [1] 1</span></pre></div>
-<p>If you need to modify multiple metadata elements at once, or replace metadata wholesale with new information from another image, the <code>asNifti</code> function provides a more efficient interface. See <code><a href="https://rdrr.io/pkg/RNifti/man/asNifti.html">?asNifti</a></code> for details.</p>
+<div class="sourceCode" id="cb6"><pre class="downlit">
+<span class="kw">image</span><span class="op">$</span><span class="kw">intent_code</span> <span class="op">&lt;-</span> <span class="fl">1</span>
+<span class="kw">image</span><span class="op">$</span><span class="kw">intent_code</span>
+<span class="co">## [1] 1</span>
+</pre></div>
+<p>If you need to modify multiple metadata elements at once, or replace metadata wholesale with new information from another image, the <code>asNifti</code> function provides a more efficient interface. See <code><a href="reference/asNifti.html">?asNifti</a></code> for details.</p>
 <p>An image can be written back to NIfTI-1 format using the <code>writeNifti</code> function. <code>gzip</code> compression will be used if the specified file name ends with “.gz”.</p>
-<div class="sourceCode" id="cb7"><pre class="r"><span class="fu"><a href="https://rdrr.io/pkg/RNifti/man/writeNifti.html">writeNifti</a></span>(<span class="no">image</span>, <span class="st">"file.nii.gz"</span>)</pre></div>
+<div class="sourceCode" id="cb7"><pre class="downlit">
+<span class="fu"><a href="reference/writeNifti.html">writeNifti</a></span>(<span class="kw">image</span>, <span class="st">"file.nii.gz"</span>)
+</pre></div>
 </div>
 <div id="image-orientation" class="section level2">
 <h2 class="hasAnchor">
 <a href="#image-orientation" class="anchor"></a>Image orientation</h2>
 <p>The NIfTI-1 format has a mechanism for indicating the physical orientation and location of the image volume in real space. The reference orientation has the left–right direction aligned with the x-axis, the posterior–anterior (back–front) direction aligned with the y-axis, and the inferior–superior (bottom–top) direction aligned with the z-axis; but “xform” information stored with an image can describe a transformation from that coordinate system to the one used by that particular image, in the form of an affine matrix. To obtain the full xform matrix for an image, call the <code>xform</code> function:</p>
-<div class="sourceCode" id="cb8"><pre class="r"><span class="fu"><a href="https://rdrr.io/pkg/RNifti/man/xform.html">xform</a></span>(<span class="no">image</span>)
+<div class="sourceCode" id="cb8"><pre class="downlit">
+<span class="fu"><a href="reference/xform.html">xform</a></span>(<span class="kw">image</span>)
 <span class="co">##      [,1] [,2] [,3]      [,4]</span>
 <span class="co">## [1,] -2.5  0.0  0.0 122.03390</span>
 <span class="co">## [2,]  0.0  2.5  0.0 -95.18523</span>
 <span class="co">## [3,]  0.0  0.0  2.5 -55.03814</span>
 <span class="co">## [4,]  0.0  0.0  0.0   1.00000</span>
 <span class="co">## attr(,"code")</span>
-<span class="co">## [1] 2</span></pre></div>
+<span class="co">## [1] 2</span>
+</pre></div>
 <p>Just the rotation with respect to the canonical axes can be obtained with the <code>rotation</code> function:</p>
-<div class="sourceCode" id="cb9"><pre class="r"><span class="fu"><a href="https://rdrr.io/pkg/RNifti/man/xform.html">rotation</a></span>(<span class="no">image</span>)
+<div class="sourceCode" id="cb9"><pre class="downlit">
+<span class="fu"><a href="reference/xform.html">rotation</a></span>(<span class="kw">image</span>)
 <span class="co">##      [,1] [,2] [,3]</span>
 <span class="co">## [1,]   -1    0    0</span>
 <span class="co">## [2,]    0    1    0</span>
-<span class="co">## [3,]    0    0    1</span></pre></div>
+<span class="co">## [3,]    0    0    1</span>
+</pre></div>
 <p>In this case, the image is flipped along the x-axis relative to the canonical axes, so the positive x-direction points towards the left rather than the right. This is compactly represented by the output of the <code>orientation</code> function, which indicates the approximate real-world directions of the positive axes in each dimension.</p>
-<div class="sourceCode" id="cb10"><pre class="r"><span class="fu"><a href="https://rdrr.io/pkg/RNifti/man/xform.html">orientation</a></span>(<span class="no">image</span>)
-<span class="co">## [1] "LAS"</span></pre></div>
+<div class="sourceCode" id="cb10"><pre class="downlit">
+<span class="fu"><a href="reference/xform.html">orientation</a></span>(<span class="kw">image</span>)
+<span class="co">## [1] "LAS"</span>
+</pre></div>
 <p>So, here, “LAS” means that the positive x-axis points left, the positive y-axis anterior and the positive z-axis superior. This is the so-called “radiological” orientation convention, and can be requested when viewing images for those who are used to it:</p>
-<div class="sourceCode" id="cb11"><pre class="r"><span class="fu"><a href="https://rdrr.io/pkg/RNifti/man/view.html">view</a></span>(<span class="no">image</span>, <span class="kw">radiological</span><span class="kw">=</span><span class="fl">TRUE</span>)</pre></div>
+<div class="sourceCode" id="cb11"><pre class="downlit">
+<span class="fu"><a href="reference/view.html">view</a></span>(<span class="kw">image</span>, radiological=<span class="fl">TRUE</span>)
+</pre></div>
 <p><img src="tools/figures/unnamed-chunk-12-1.png" alt="plot of chunk unnamed-chunk-12"></p>
 <p>Notice the left (L) and right (R) labels, relative to the view shown above. Setting the <code>radiologicalView</code> option to <code>TRUE</code> will make this the default for all future views.</p>
 <p>There is a replacement version of the <code>orientation</code> function, which will reorient the image to align with the requested directions. This is a relatively complex operation, affecting the xform and the storage order of the data.</p>
-<div class="sourceCode" id="cb12"><pre class="r"><span class="no">image</span>[<span class="fl">50</span>,<span class="fl">39</span>,<span class="fl">23</span>]
+<div class="sourceCode" id="cb12"><pre class="downlit">
+<span class="kw">image</span>[<span class="fl">50</span>,<span class="fl">39</span>,<span class="fl">23</span>]
 <span class="co">## [1] 300</span>
-<span class="fu"><a href="https://rdrr.io/pkg/RNifti/man/xform.html">orientation</a></span>(<span class="no">image</span>) <span class="kw">&lt;-</span> <span class="st">"RAS"</span>
-<span class="fu"><a href="https://rdrr.io/pkg/RNifti/man/xform.html">xform</a></span>(<span class="no">image</span>)
+<span class="fu"><a href="reference/xform.html">orientation</a></span>(<span class="kw">image</span>) <span class="op">&lt;-</span> <span class="st">"RAS"</span>
+<span class="fu"><a href="reference/xform.html">xform</a></span>(<span class="kw">image</span>)
 <span class="co">##      [,1] [,2] [,3]       [,4]</span>
 <span class="co">## [1,]  2.5  0.0  0.0 -115.46609</span>
 <span class="co">## [2,]  0.0  2.5  0.0  -95.18523</span>
@@ -191,10 +214,11 @@
 <span class="co">## [4,]  0.0  0.0  0.0    1.00000</span>
 <span class="co">## attr(,"code")</span>
 <span class="co">## [1] 2</span>
-<span class="no">image</span>[<span class="fl">50</span>,<span class="fl">39</span>,<span class="fl">23</span>]
+<span class="kw">image</span>[<span class="fl">50</span>,<span class="fl">39</span>,<span class="fl">23</span>]
 <span class="co">## [1] 310</span>
-<span class="no">image</span>[<span class="fl">47</span>,<span class="fl">39</span>,<span class="fl">23</span>]
-<span class="co">## [1] 300</span></pre></div>
+<span class="kw">image</span>[<span class="fl">47</span>,<span class="fl">39</span>,<span class="fl">23</span>]
+<span class="co">## [1] 300</span>
+</pre></div>
 <p>Notice that the sign of the top-left element of the xform has now flipped, and the value of the image at location (50,39,23) has changed because the data has been reordered. The equivalent x-location is now 47, which is the 50th element counting in the other direction (96 - 50 + 1 = 47).</p>
 <p>This latter operation can be useful to ensure that indexing into several images with different native storage conventions will end up always having approximately the same meaning (and it is performed internally by the viewer, if required). It is non-destructive, because no interpolation of the data is performed. This means that the axes will not exactly align with the requested directions if the original image was oblique to the canonical axes, but conversely it ensures that no degradation in the image will result. (The <a href="https://github.com/jonclayden/RNiftyReg"><code>RNiftyReg</code> package</a> can be used to apply an arbitrary rotation to an image and interpolate the data onto the new grid, if required.)</p>
 </div>
@@ -202,49 +226,56 @@
 <h2 class="hasAnchor">
 <a href="#support-for-composite-types" class="anchor"></a>Support for composite types</h2>
 <p>The NIfTI-1 standard supports composite types such as complex-valued and RGB images, and support for these was added in version 1.0.0 of this package. Complex data is exposed to R using the standard <code>complex</code> vector type:</p>
-<div class="sourceCode" id="cb13"><pre class="r"><span class="no">image</span> <span class="kw">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/RNifti/man/readNifti.html">readNifti</a></span>(<span class="fu"><a href="https://rdrr.io/r/base/system.file.html">system.file</a></span>(<span class="st">"extdata"</span>, <span class="st">"example.nii.gz"</span>, <span class="kw">package</span><span class="kw">=</span><span class="st">"RNifti"</span>))
-<span class="no">complexImage</span> <span class="kw">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/RNifti/man/asNifti.html">asNifti</a></span>(<span class="no">image</span> + <span class="fl">0i</span>)
-<span class="fu"><a href="https://rdrr.io/r/base/print.html">print</a></span>(<span class="no">complexImage</span>)
+<div class="sourceCode" id="cb13"><pre class="downlit">
+<span class="kw">image</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/readNifti.html">readNifti</a></span>(<span class="fu"><a href="https://rdrr.io/r/base/system.file.html">system.file</a></span>(<span class="st">"extdata"</span>, <span class="st">"example.nii.gz"</span>, package=<span class="st">"RNifti"</span>))
+<span class="kw">complexImage</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/asNifti.html">asNifti</a></span>(<span class="kw">image</span> <span class="op">+</span> <span class="fl">0i</span>)
+<span class="fu"><a href="https://rdrr.io/r/base/print.html">print</a></span>(<span class="kw">complexImage</span>)
 <span class="co">## Image array of mode "complex" (8.4 Mb)</span>
 <span class="co">## - 96 x 96 x 60 voxels</span>
 <span class="co">## - 2.5 x 2.5 x 2.5 mm per voxel</span>
-<span class="no">complexImage</span>[<span class="fl">50</span>,<span class="fl">39</span>,<span class="fl">23</span>]
-<span class="co">## [1] 300+0i</span></pre></div>
+<span class="kw">complexImage</span>[<span class="fl">50</span>,<span class="fl">39</span>,<span class="fl">23</span>]
+<span class="co">## [1] 300+0i</span>
+</pre></div>
 <p>R’s native representation for RGB values is <a href="https://en.wikipedia.org/wiki/Web_colors">CSS-style hex strings</a> of character mode, which are reasonably space-efficient (8 or 10 bytes per value) but a little clunky to work with. For efficiency of interchange between R and the NIfTI-internal datatypes, <code>RNifti</code> uses a byte-packed representation of integer mode instead, which takes up 4 bytes per value. Of course, the viewer understands this format.</p>
-<div class="sourceCode" id="cb14"><pre class="r"><span class="no">rgbImage</span> <span class="kw">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/RNifti/man/readNifti.html">readNifti</a></span>(<span class="fu"><a href="https://rdrr.io/r/base/system.file.html">system.file</a></span>(<span class="st">"extdata"</span>, <span class="st">"example_rgb.nii.gz"</span>, <span class="kw">package</span><span class="kw">=</span><span class="st">"RNifti"</span>))
-<span class="fu"><a href="https://rdrr.io/r/base/print.html">print</a></span>(<span class="no">rgbImage</span>)
+<div class="sourceCode" id="cb14"><pre class="downlit">
+<span class="kw">rgbImage</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/readNifti.html">readNifti</a></span>(<span class="fu"><a href="https://rdrr.io/r/base/system.file.html">system.file</a></span>(<span class="st">"extdata"</span>, <span class="st">"example_rgb.nii.gz"</span>, package=<span class="st">"RNifti"</span>))
+<span class="fu"><a href="https://rdrr.io/r/base/print.html">print</a></span>(<span class="kw">rgbImage</span>)
 <span class="co">## Image array of mode "integer" (2.1 Mb)</span>
 <span class="co">## - 96 x 96 x 60 voxels</span>
 <span class="co">## - 2.5 x 2.5 x 2.5 mm per voxel</span>
-<span class="fu"><a href="https://rdrr.io/r/base/class.html">class</a></span>(<span class="no">rgbImage</span>)
+<span class="fu"><a href="https://rdrr.io/r/base/class.html">class</a></span>(<span class="kw">rgbImage</span>)
 <span class="co">## [1] "niftiImage" "rgbArray"   "array"</span>
-<span class="fu"><a href="https://rdrr.io/pkg/RNifti/man/view.html">view</a></span>(<span class="no">rgbImage</span>)</pre></div>
+<span class="fu"><a href="reference/view.html">view</a></span>(<span class="kw">rgbImage</span>)
+</pre></div>
 <p><img src="tools/figures/unnamed-chunk-15-1.png" alt="plot of chunk unnamed-chunk-15"></p>
 <p>Notice that values are shown in the viewer using R’s conventional hex string format, but the data is of class <code>rgbArray</code>. The function of the same name can be used to create these arrays from strings or channel values, for the purposes of building RGB images from data, while the <code>as.character</code> method and <code>channels</code> function perform the opposite conversions.</p>
-<div class="sourceCode" id="cb15"><pre class="r"><span class="fu"><a href="https://rdrr.io/r/base/character.html">as.character</a></span>(<span class="no">rgbImage</span>, <span class="kw">flatten</span><span class="kw">=</span><span class="fl">FALSE</span>)[<span class="fl">50</span>,<span class="fl">39</span>,<span class="fl">23</span>]
+<div class="sourceCode" id="cb15"><pre class="downlit">
+<span class="fu"><a href="https://rdrr.io/r/base/character.html">as.character</a></span>(<span class="kw">rgbImage</span>, flatten=<span class="fl">FALSE</span>)[<span class="fl">50</span>,<span class="fl">39</span>,<span class="fl">23</span>]
 <span class="co">## [1] "#1F5B8A"</span>
-<span class="fu"><a href="https://rdrr.io/pkg/RNifti/man/channels.html">channels</a></span>(<span class="no">rgbImage</span>, <span class="st">"red"</span>)[<span class="fl">50</span>,<span class="fl">39</span>,<span class="fl">23</span>,<span class="fl">1</span>]
+<span class="fu"><a href="reference/channels.html">channels</a></span>(<span class="kw">rgbImage</span>, <span class="st">"red"</span>)[<span class="fl">50</span>,<span class="fl">39</span>,<span class="fl">23</span>,<span class="fl">1</span>]
 <span class="co">## red </span>
-<span class="co">##  31</span></pre></div>
+<span class="co">##  31</span>
+</pre></div>
 <p>RGB images with an alpha (opacity) channel are also supported.</p>
 </div>
 <div id="performance" class="section level2">
 <h2 class="hasAnchor">
 <a href="#performance" class="anchor"></a>Performance</h2>
 <p>The <code>RNifti</code> package uses the robust NIfTI-1 reference implementation, which is written in C, to read and write NIfTI files. It also uses the standard NIfTI-1 data structure as its canonical representation of an image in memory. Together, these make the package extremely fast, as the following benchmark against packages <a href="https://cran.r-project.org/package=AnalyzeFMRI"><code>AnalyzeFMRI</code></a>, <a href="https://github.com/ANTsX/ANTsRCore"><code>ANTsRCore</code></a>, <a href="https://cran.r-project.org/package=neuroim"><code>neuroim</code></a>, <a href="https://cran.r-project.org/package=oro.nifti"><code>oro.nifti</code></a> and <a href="https://cran.r-project.org/package=tractor.base"><code>tractor.base</code></a> shows.</p>
-<div class="sourceCode" id="cb16"><pre class="r"><span class="fu"><a href="https://rdrr.io/r/utils/installed.packages.html">installed.packages</a></span>()[<span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="st">"AnalyzeFMRI"</span>,<span class="st">"ANTsRCore"</span>,<span class="st">"neuroim"</span>,<span class="st">"oro.nifti"</span>,<span class="st">"RNifti"</span>,
+<div class="sourceCode" id="cb16"><pre class="downlit">
+<span class="fu"><a href="https://rdrr.io/r/utils/installed.packages.html">installed.packages</a></span>()[<span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="st">"AnalyzeFMRI"</span>,<span class="st">"ANTsRCore"</span>,<span class="st">"neuroim"</span>,<span class="st">"oro.nifti"</span>,<span class="st">"RNifti"</span>,
                        <span class="st">"tractor.base"</span>), <span class="st">"Version"</span>]
 <span class="co">##  AnalyzeFMRI    ANTsRCore      neuroim    oro.nifti       RNifti tractor.base </span>
 <span class="co">##     "1.1-21"      "0.7.3"      "0.0.6"      "0.9.1"      "1.0.0"      "3.3.2"</span>
 
-<span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="no">microbenchmark</span>)
-<span class="fu">microbenchmark</span>(<span class="kw pkg">AnalyzeFMRI</span><span class="kw ns">::</span><span class="fu">f.read.volume</span>(<span class="st">"example.nii"</span>),
-               <span class="kw pkg">ANTsRCore</span><span class="kw ns">::</span><span class="fu"><a href="https://rdrr.io/pkg/ANTsRCore/man/antsImageRead.html">antsImageRead</a></span>(<span class="st">"example.nii"</span>),
-               <span class="kw pkg">neuroim</span><span class="kw ns">::</span><span class="fu">loadVolume</span>(<span class="st">"example.nii"</span>),
-               <span class="kw pkg">oro.nifti</span><span class="kw ns">::</span><span class="fu">readNIfTI</span>(<span class="st">"example.nii"</span>),
-               <span class="kw pkg">RNifti</span><span class="kw ns">::</span><span class="fu"><a href="https://rdrr.io/pkg/RNifti/man/readNifti.html">readNifti</a></span>(<span class="st">"example.nii"</span>),
-               <span class="kw pkg">RNifti</span><span class="kw ns">::</span><span class="fu"><a href="https://rdrr.io/pkg/RNifti/man/readNifti.html">readNifti</a></span>(<span class="st">"example.nii"</span>, <span class="kw">internal</span><span class="kw">=</span><span class="fl">TRUE</span>),
-               <span class="kw pkg">tractor.base</span><span class="kw ns">::</span><span class="fu">readImageFile</span>(<span class="st">"example.nii"</span>), <span class="kw">unit</span><span class="kw">=</span><span class="st">"ms"</span>)
+<span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="kw">microbenchmark</span>)
+<span class="fu">microbenchmark</span>(<span class="kw">AnalyzeFMRI</span>::<span class="fu">f.read.volume</span>(<span class="st">"example.nii"</span>),
+               <span class="kw">ANTsRCore</span>::<span class="fu"><a href="https://rdrr.io/pkg/ANTsRCore/man/antsImageRead.html">antsImageRead</a></span>(<span class="st">"example.nii"</span>),
+               <span class="kw">neuroim</span>::<span class="fu">loadVolume</span>(<span class="st">"example.nii"</span>),
+               <span class="kw">oro.nifti</span>::<span class="fu">readNIfTI</span>(<span class="st">"example.nii"</span>),
+               <span class="kw">RNifti</span>::<span class="fu"><a href="reference/readNifti.html">readNifti</a></span>(<span class="st">"example.nii"</span>),
+               <span class="kw">RNifti</span>::<span class="fu"><a href="reference/readNifti.html">readNifti</a></span>(<span class="st">"example.nii"</span>, internal=<span class="fl">TRUE</span>),
+               <span class="kw">tractor.base</span>::<span class="fu">readImageFile</span>(<span class="st">"example.nii"</span>), unit=<span class="st">"ms"</span>)
 <span class="co">## Unit: milliseconds</span>
 <span class="co">##                                               expr       min        lq</span>
 <span class="co">##          AnalyzeFMRI::f.read.volume("example.nii") 10.650034 10.785712</span>
@@ -261,7 +292,8 @@
 <span class="co">##  50.4967592 29.4253275 32.0777185  434.736898   100</span>
 <span class="co">##   1.6504420  1.5129170  1.7070565    5.564642   100</span>
 <span class="co">##   0.3028081  0.2976415  0.3680695    0.768533   100</span>
-<span class="co">##  26.8987791 10.4609615 13.3785205  180.474982   100</span></pre></div>
+<span class="co">##  26.8987791 10.4609615 13.3785205  180.474982   100</span>
+</pre></div>
 <p>With a median runtime of less than 2 ms, <code>RNifti</code> is typically around ten times as fast as the alternatives to read this image into R. The exception is <code>ANTsRCore</code>, which uses a similar low-level pointer-based arrangement as <code>RNifti</code>, and is therefore comparable in speed. However, <code>ANTsR</code> has substantial dependencies, which may affect its suitability in some applications.</p>
 <p>Moreover, when reading the file into an “internal” image, which does not copy the pixel values into R data structures until they are required, the median runtime drops by a further 80%, to just 300 µs. This saves time and memory, while still allowing data access through standard R indexing operations.</p>
 </div>
@@ -316,7 +348,7 @@
 <h2 class="hasAnchor">
 <a href="#the-nifti-2-format" class="anchor"></a>The NIfTI-2 format</h2>
 <p>The <a href="https://nifti.nimh.nih.gov/nifti-2">NIfTI-2 format</a> is an evolution of the far more widely-used NIfTI-1. It primarily <a href="https://www.nitrc.org/forum/forum.php?thread_id=2148&amp;forum_id=1941">uses wider types for various fields</a>, to support large datasets and improve precision.</p>
-<p>Unfortunately, the NIfTI-1 version of the reference library is not forwards-compatible with NIfTI-2, and does not recognise NIfTI-2 files as valid, while the NIfTI-2 version changes the definition of the <code>nifti_image</code> data structure, and hence the return type of several core functions, rendering it potentially incompatible with software written for the original library. As a result, adding full NIfTI-2 support to <code>RNifti</code> without breaking existing code is not straightforward. Nevertheless, as of <code>RNifti</code> version 0.8.0, R function <code><a href="https://rdrr.io/pkg/RNifti/man/niftiVersion.html">niftiVersion()</a></code> and C++ static method <code>NiftiImage::fileVersion()</code> offer a forwards-compatible way to determine the version of the format used by a particular file, so that calling functions can take action accordingly.</p>
+<p>Unfortunately, the NIfTI-1 version of the reference library is not forwards-compatible with NIfTI-2, and does not recognise NIfTI-2 files as valid, while the NIfTI-2 version changes the definition of the <code>nifti_image</code> data structure, and hence the return type of several core functions, rendering it potentially incompatible with software written for the original library. As a result, adding full NIfTI-2 support to <code>RNifti</code> without breaking existing code is not straightforward. Nevertheless, as of <code>RNifti</code> version 0.8.0, R function <code><a href="reference/niftiVersion.html">niftiVersion()</a></code> and C++ static method <code>NiftiImage::fileVersion()</code> offer a forwards-compatible way to determine the version of the format used by a particular file, so that calling functions can take action accordingly.</p>
 </div>
 </div>
 
