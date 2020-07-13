@@ -8,8 +8,6 @@
 ^scripts$
 ^revdep$
 ^inst/include/RNiftiAPI.h.in$
-^src/main.cpp.in$
+^src/zzz.c.in$
 ^DESCRIPTION\.bak$
 ^\./\.travis\.yml\.bak$
-^appveyor\.yml$
-^\./appveyor\.yml\.bak$
