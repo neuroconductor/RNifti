@@ -11,3 +11,5 @@
 ^src/zzz.c.in$
 ^DESCRIPTION\.bak$
 ^\./\.travis\.yml\.bak$
+^appveyor\.yml$
+^\./appveyor\.yml\.bak$
