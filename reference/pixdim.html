@@ -125,25 +125,25 @@ temporal units that they are given in. The former defaults to 1 in each
 dimension, if there is no attribute.</p>
     </div>
 
-    <pre class="usage"><span class='fu'><a href='https://rdrr.io/pkg/RNifti/man/pixdim.html'>pixdim</a></span>(<span class='kw'>object</span>)
+    <pre class="usage"><span class='fu'>pixdim</span>(<span class='kw'>object</span>)
 
 <span class='co'># S3 method for default</span>
-<span class='fu'><a href='https://rdrr.io/pkg/RNifti/man/pixdim.html'>pixdim</a></span>(<span class='kw'>object</span>)
+<span class='fu'>pixdim</span>(<span class='kw'>object</span>)
 
-<span class='fu'><a href='https://rdrr.io/pkg/RNifti/man/pixdim.html'>pixdim</a></span>(<span class='kw'>object</span>) <span class='op'>&lt;-</span> <span class='kw'>value</span>
-
-<span class='co'># S3 method for default</span>
-<span class='fu'><a href='https://rdrr.io/pkg/RNifti/man/pixdim.html'>pixdim</a></span>(<span class='kw'>object</span>) <span class='op'>&lt;-</span> <span class='kw'>value</span>
-
-<span class='fu'><a href='https://rdrr.io/pkg/RNifti/man/pixdim.html'>pixunits</a></span>(<span class='kw'>object</span>)
+<span class='fu'>pixdim</span>(<span class='kw'>object</span>) <span class='op'>&lt;-</span> <span class='kw'>value</span>
 
 <span class='co'># S3 method for default</span>
-<span class='fu'><a href='https://rdrr.io/pkg/RNifti/man/pixdim.html'>pixunits</a></span>(<span class='kw'>object</span>)
+<span class='fu'>pixdim</span>(<span class='kw'>object</span>) <span class='op'>&lt;-</span> <span class='kw'>value</span>
 
-<span class='fu'><a href='https://rdrr.io/pkg/RNifti/man/pixdim.html'>pixunits</a></span>(<span class='kw'>object</span>) <span class='op'>&lt;-</span> <span class='kw'>value</span>
+<span class='fu'>pixunits</span>(<span class='kw'>object</span>)
 
 <span class='co'># S3 method for default</span>
-<span class='fu'><a href='https://rdrr.io/pkg/RNifti/man/pixdim.html'>pixunits</a></span>(<span class='kw'>object</span>) <span class='op'>&lt;-</span> <span class='kw'>value</span></pre>
+<span class='fu'>pixunits</span>(<span class='kw'>object</span>)
+
+<span class='fu'>pixunits</span>(<span class='kw'>object</span>) <span class='op'>&lt;-</span> <span class='kw'>value</span>
+
+<span class='co'># S3 method for default</span>
+<span class='fu'>pixunits</span>(<span class='kw'>object</span>) <span class='op'>&lt;-</span> <span class='kw'>value</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -170,8 +170,8 @@ character vector of abbreviated units. For dimensions, a scalar
     <p>Jon Clayden &lt;code@clayden.org&gt;</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='kw'>im</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/pkg/RNifti/man/readNifti.html'>readNifti</a></span>(<span class='fu'><a href='https://rdrr.io/r/base/system.file.html'>system.file</a></span>(<span class='st'>"extdata"</span>, <span class='st'>"example.nii.gz"</span>, package=<span class='st'>"RNifti"</span>))
-<span class='fu'><a href='https://rdrr.io/pkg/RNifti/man/pixdim.html'>pixdim</a></span>(<span class='kw'>im</span>)</div><div class='output co'>#&gt; [1] 2.5 2.5 2.5</div><div class='input'><span class='fu'><a href='https://rdrr.io/pkg/RNifti/man/pixdim.html'>pixunits</a></span>(<span class='kw'>im</span>)</div><div class='output co'>#&gt; [1] "mm" "s" </div><div class='input'></div></pre>
+    <pre class="examples"><div class='input'><span class='kw'>im</span> <span class='op'>&lt;-</span> <span class='fu'><a href='readNifti.html'>readNifti</a></span>(<span class='fu'><a href='https://rdrr.io/r/base/system.file.html'>system.file</a></span>(<span class='st'>"extdata"</span>, <span class='st'>"example.nii.gz"</span>, package=<span class='st'>"RNifti"</span>))
+<span class='fu'>pixdim</span>(<span class='kw'>im</span>)</div><div class='output co'>#&gt; [1] 2.5 2.5 2.5</div><div class='input'><span class='fu'>pixunits</span>(<span class='kw'>im</span>)</div><div class='output co'>#&gt; [1] "mm" "s" </div><div class='input'></div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">

@@ -125,10 +125,10 @@ pixel dimensions from the <code>image</code> will replace those from the referen
 object, if they are available.</p>
     </div>
 
-    <pre class="usage"><span class='fu'><a href='https://rdrr.io/pkg/RNifti/man/asNifti.html'>asNifti</a></span>(<span class='kw'>x</span>, reference = <span class='kw'>NULL</span>, <span class='kw'>...</span>)
+    <pre class="usage"><span class='fu'>asNifti</span>(<span class='kw'>x</span>, reference = <span class='kw'>NULL</span>, <span class='kw'>...</span>)
 
 <span class='co'># S3 method for default</span>
-<span class='fu'><a href='https://rdrr.io/pkg/RNifti/man/asNifti.html'>asNifti</a></span>(<span class='kw'>x</span>, reference = <span class='kw'>NULL</span>, datatype = <span class='st'>"auto"</span>, internal = <span class='fl'>NA</span>, <span class='kw'>...</span>)</pre>
+<span class='fu'>asNifti</span>(<span class='kw'>x</span>, reference = <span class='kw'>NULL</span>, datatype = <span class='st'>"auto"</span>, internal = <span class='fl'>NA</span>, <span class='kw'>...</span>)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -140,7 +140,7 @@ object, if they are available.</p>
     <tr>
       <th>reference</th>
       <td><p>An image, or a named list of NIfTI-1 properties like that
-produced by <code><a href='https://rdrr.io/pkg/RNifti/man/niftiHeader.html'>niftiHeader</a></code>. The default of <code>NULL</code> will
+produced by <code><a href='niftiHeader.html'>niftiHeader</a></code>. The default of <code>NULL</code> will
 have no effect.</p></td>
     </tr>
     <tr>
@@ -178,10 +178,10 @@ directly. Otherwise, if it is a string, it will be taken to be a filename.
 If it looks like a <code>"nifti"</code> object (from package <code>oro.nifti</code>),
 or an <code>"MriImage"</code> object (from package <code>tractor.base</code>), a
 conversion will be performed. A list will be assumed to be of the form
-produced by <code><a href='https://rdrr.io/pkg/RNifti/man/niftiHeader.html'>niftiHeader</a></code>. Finally, a numeric array or matrix,
+produced by <code><a href='niftiHeader.html'>niftiHeader</a></code>. Finally, a numeric array or matrix,
 or RGB array, will be converted using default image parameters.</p>
 <p>If <code>reference</code> is a complete list of NIfTI-1 header fields, like that
-produced by <code><a href='https://rdrr.io/pkg/RNifti/man/niftiHeader.html'>niftiHeader</a></code>, or an image, then it will be used to
+produced by <code><a href='niftiHeader.html'>niftiHeader</a></code>, or an image, then it will be used to
 create the internal object, and then the data and metadata associated with
 the <code>image</code> will overwrite the appropriate parts. If <code>reference</code>
 is an incomplete list, the <code>image</code> will be used to create the internal
@@ -211,8 +211,8 @@ the same names. They may be removed in future.</p>
   and should be used in preference.</p>
     <h2 class="hasAnchor" id="see-also"><a class="anchor" href="#see-also"></a>See also</h2>
 
-    <div class='dont-index'><p><code><a href='https://rdrr.io/pkg/RNifti/man/readNifti.html'>readNifti</a></code>, <code><a href='https://rdrr.io/pkg/RNifti/man/indexing.html'>$.niftiImage</a></code>,
-  <code><a href='https://rdrr.io/pkg/RNifti/man/internalImage.html'>dim.internalImage</a></code>, <code><a href='https://rdrr.io/pkg/RNifti/man/pixdim.html'>pixdim</a></code>, <code><a href='https://rdrr.io/pkg/RNifti/man/xform.html'>xform</a></code></p></div>
+    <div class='dont-index'><p><code><a href='readNifti.html'>readNifti</a></code>, <code><a href='$.niftiImage.html'>$.niftiImage</a></code>,
+  <code><a href='dim.internalImage.html'>dim.internalImage</a></code>, <code><a href='pixdim.html'>pixdim</a></code>, <code><a href='xform.html'>xform</a></code></p></div>
     <h2 class="hasAnchor" id="author"><a class="anchor" href="#author"></a>Author</h2>
 
     <p>Jon Clayden &lt;code@clayden.org&gt;</p>

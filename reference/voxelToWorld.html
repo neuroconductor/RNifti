@@ -121,15 +121,15 @@ coordinates of the real-world origin." />
     <p>These functions are used to transform points from dimensionless pixel or
 voxel coordinates to ``real-world'' coordinates, typically in millimetres,
 and back. Actual pixel units can be obtained using the
-<code><a href='https://rdrr.io/pkg/RNifti/man/pixdim.html'>pixunits</a></code> function. The <code>origin</code> function gives the voxel
+<code><a href='pixdim.html'>pixunits</a></code> function. The <code>origin</code> function gives the voxel
 coordinates of the real-world origin.</p>
     </div>
 
-    <pre class="usage"><span class='fu'><a href='https://rdrr.io/pkg/RNifti/man/voxelToWorld.html'>voxelToWorld</a></span>(<span class='kw'>points</span>, <span class='kw'>image</span>, simple = <span class='fl'>FALSE</span>, <span class='kw'>...</span>)
+    <pre class="usage"><span class='fu'>voxelToWorld</span>(<span class='kw'>points</span>, <span class='kw'>image</span>, simple = <span class='fl'>FALSE</span>, <span class='kw'>...</span>)
 
-<span class='fu'><a href='https://rdrr.io/pkg/RNifti/man/voxelToWorld.html'>worldToVoxel</a></span>(<span class='kw'>points</span>, <span class='kw'>image</span>, simple = <span class='fl'>FALSE</span>, <span class='kw'>...</span>)
+<span class='fu'>worldToVoxel</span>(<span class='kw'>points</span>, <span class='kw'>image</span>, simple = <span class='fl'>FALSE</span>, <span class='kw'>...</span>)
 
-<span class='fu'><a href='https://rdrr.io/pkg/RNifti/man/voxelToWorld.html'>origin</a></span>(<span class='kw'>image</span>, <span class='kw'>...</span>)</pre>
+<span class='fu'>origin</span>(<span class='kw'>image</span>, <span class='kw'>...</span>)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -152,7 +152,7 @@ recorded in the <code>image</code>. Otherwise the full xform matrix is used.</p>
     </tr>
     <tr>
       <th>...</th>
-      <td><p>Additional arguments to <code><a href='https://rdrr.io/pkg/RNifti/man/xform.html'>xform</a></code>.</p></td>
+      <td><p>Additional arguments to <code><a href='xform.html'>xform</a></code>.</p></td>
     </tr>
     </table>
 
@@ -165,16 +165,16 @@ recorded in the <code>image</code>. Otherwise the full xform matrix is used.</p>
   convention, beginning from 1.</p>
     <h2 class="hasAnchor" id="see-also"><a class="anchor" href="#see-also"></a>See also</h2>
 
-    <div class='dont-index'><p><code><a href='https://rdrr.io/pkg/RNifti/man/xform.html'>xform</a></code>, <code><a href='https://rdrr.io/pkg/RNifti/man/pixdim.html'>pixdim</a></code>, <code><a href='https://rdrr.io/pkg/RNifti/man/pixdim.html'>pixunits</a></code></p></div>
+    <div class='dont-index'><p><code><a href='xform.html'>xform</a></code>, <code><a href='pixdim.html'>pixdim</a></code>, <code><a href='pixdim.html'>pixunits</a></code></p></div>
     <h2 class="hasAnchor" id="author"><a class="anchor" href="#author"></a>Author</h2>
 
     <p>Jon Clayden &lt;code@clayden.org&gt;</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='kw'>im</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/pkg/RNifti/man/readNifti.html'>readNifti</a></span>(<span class='fu'><a href='https://rdrr.io/r/base/system.file.html'>system.file</a></span>(<span class='st'>"extdata"</span>, <span class='st'>"example.nii.gz"</span>, package=<span class='st'>"RNifti"</span>))
+    <pre class="examples"><div class='input'><span class='kw'>im</span> <span class='op'>&lt;-</span> <span class='fu'><a href='readNifti.html'>readNifti</a></span>(<span class='fu'><a href='https://rdrr.io/r/base/system.file.html'>system.file</a></span>(<span class='st'>"extdata"</span>, <span class='st'>"example.nii.gz"</span>, package=<span class='st'>"RNifti"</span>))
 
 <span class='co'># Find the origin</span>
-<span class='fu'><a href='https://rdrr.io/pkg/RNifti/man/voxelToWorld.html'>origin</a></span>(<span class='kw'>im</span>)</div><div class='output co'>#&gt; [1] 49.81356 39.07409 23.01525</div><div class='input'></div></pre>
+<span class='fu'>origin</span>(<span class='kw'>im</span>)</div><div class='output co'>#&gt; [1] 49.81356 39.07409 23.01525</div><div class='input'></div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">

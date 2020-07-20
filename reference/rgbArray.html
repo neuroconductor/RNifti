@@ -125,7 +125,7 @@ The resulting array can be used to construct an RGB(A) NIfTI image, or
 converted to standard R colour strings using the <code>as.character</code> method.</p>
     </div>
 
-    <pre class="usage"><span class='fu'><a href='https://rdrr.io/pkg/RNifti/man/rgbArray.html'>rgbArray</a></span>(<span class='kw'>red</span>, <span class='kw'>green</span>, <span class='kw'>blue</span>, <span class='kw'>alpha</span>, max = <span class='kw'>NULL</span>, dim = <span class='kw'>NULL</span>, <span class='kw'>...</span>)
+    <pre class="usage"><span class='fu'>rgbArray</span>(<span class='kw'>red</span>, <span class='kw'>green</span>, <span class='kw'>blue</span>, <span class='kw'>alpha</span>, max = <span class='kw'>NULL</span>, dim = <span class='kw'>NULL</span>, <span class='kw'>...</span>)
 
 <span class='co'># S3 method for rgbArray</span>
 <span class='fu'><a href='https://rdrr.io/r/base/character.html'>as.character</a></span>(<span class='kw'>x</span>, flatten = <span class='fl'>TRUE</span>, <span class='kw'>...</span>)</pre>
@@ -188,7 +188,7 @@ all attributes.</p></td>
     <p>The values of an <code>"rgbArray"</code> are not easily interpreted, and
   may depend on the endianness of the platform. For manipulation or use as
   colours they should generally be converted to character mode, or the
-  channels extracted using the <code><a href='https://rdrr.io/pkg/RNifti/man/channels.html'>channels</a></code> function.</p>
+  channels extracted using the <code><a href='channels.html'>channels</a></code> function.</p>
     <h2 class="hasAnchor" id="author"><a class="anchor" href="#author"></a>Author</h2>
 
     <p>Jon Clayden &lt;code@clayden.org&gt;</p>
