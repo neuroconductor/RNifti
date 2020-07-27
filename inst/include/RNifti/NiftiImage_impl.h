@@ -90,103 +90,122 @@ inline int stringToDatatype (const std::string &datatype)
         return datatypeCodes[lowerCaseDatatype];
 }
 
-struct ImageBuffers
+template <typename TargetType>
+struct ElementConverter
 {
-    char *source;
-    char *target;
+    template <typename SourceType>
+    TargetType operator() (const SourceType &source)
+    {
+        return static_cast<TargetType>(source);
+    }
 };
-
-template <typename SourceType, typename TargetType>
-inline void castElements (ImageBuffers &buffers, const size_t n)
-{
-    const SourceType *source = reinterpret_cast<const SourceType*>(buffers.source);
-    TargetType *target = reinterpret_cast<TargetType*>(buffers.target);
-    for (size_t i=0; i<n; i++)
-        *(target + i) = static_cast<TargetType>(*(source + i));
-    buffers.source += sizeof(SourceType) * n;
-    buffers.target += sizeof(TargetType) * n;
-}
-
-template <typename Type>
-inline void copyElements (ImageBuffers &buffers, const size_t n)
-{
-    memcpy(buffers.target, buffers.source, sizeof(Type) * n);
-    buffers.source += sizeof(Type) * n;
-    buffers.target += sizeof(Type) * n;
-}
 
 #if RNIFTI_NIFTILIB_VERSION == 1
 
 // Byte-by-byte conversion of nifti2_image struct to a nifti1_image
 // By nature this is a risky operation, which has to make assumptions about the layout of the structs in memory
-inline nifti1_image * convertImageV2to1 (void *image)
+inline nifti1_image * convertImageV2to1 (nifti2_image *image)
 {
-    // A rudimentary check that byte alignment is working as expected
-    if (sizeof(nifti1_image) != 644 + 4 * sizeof(void*))
-        throw std::runtime_error("Stored image version cannot be changed");
+    if (image == NULL)
+        return NULL;
     
     nifti1_image *result = (nifti1_image *) calloc(1, sizeof(nifti1_image));
-    ImageBuffers buffers = { static_cast<char*>(image), reinterpret_cast<char*>(result) };
     
-    castElements<int64_t,int>(buffers, 16);
-    castElements<int64_t,size_t>(buffers, 1);
-    copyElements<int>(buffers, 2);
-    castElements<double,float>(buffers, 19);
-    copyElements<int>(buffers, 6);
-    castElements<int64_t,int>(buffers, 2);
-    castElements<double,float>(buffers, 73);
-    copyElements<int>(buffers, 4);
-    castElements<double,float>(buffers, 3);
-    copyElements<char>(buffers, 120);
-    copyElements<char*>(buffers, 2);
-    castElements<int64_t,int>(buffers, 1);
-    copyElements<int>(buffers, 2);
-    copyElements<void*>(buffers, 1);
-    copyElements<int>(buffers, 1);
-    copyElements<nifti1_extension*>(buffers, 1);
-    copyElements<analyze_75_orient_code>(buffers, 1);
+#ifndef NDEBUG
+    Rc_printf("Converting v2 image with pointer %p to v1 image with pointer %p\n", image, result);
+#endif
+    
+    // We assume that each block of a given type is stored contiguously like an array - this should be the case, but may not be guaranteed
+    std::transform(&image->ndim, &image->ndim + 16, &result->ndim, ElementConverter<int>());
+    result->nvox = static_cast<int>(image->nvox);
+    std::copy(&image->nbyper, &image->nbyper + 2, &result->nbyper);
+    std::transform(&image->dx, &image->dx + 19, &result->dx, ElementConverter<float>());
+    std::copy(&image->qform_code, &image->qform_code + 6, &result->qform_code);
+    std::transform(&image->slice_start, &image->slice_start + 2, &result->slice_start, ElementConverter<int>());
+    std::transform(&image->slice_duration, &image->slice_duration + 73, &result->slice_duration, ElementConverter<float>());
+    std::copy(&image->xyz_units, &image->xyz_units + 4, &result->xyz_units);
+    std::transform(&image->intent_p1, &image->intent_p1 + 3, &result->intent_p1, ElementConverter<float>());
+    std::copy(static_cast<char*>(image->intent_name), static_cast<char*>(image->intent_name) + 120, static_cast<char*>(result->intent_name));
+    result->iname_offset = static_cast<int>(image->iname_offset);
+    std::copy(&image->swapsize, &image->swapsize + 2, &result->swapsize);
+    result->analyze75_orient = image->analyze75_orient;
+    
+    // Copy buffers, since the memory-freeing logic isn't portable between struct versions
+    result->fname = nifti_strdup(image->fname);
+    result->iname = nifti_strdup(image->iname);
+    if (image->data != NULL)
+    {
+        result->data = calloc(result->nvox, result->nbyper);
+        memcpy(result->data, image->data, result->nvox * result->nbyper);
+    }
+    
+    // Copy extensions
+    result->num_ext = image->num_ext;
+    result->ext_list = result->num_ext == 0 ? NULL : (nifti1_extension *) calloc(result->num_ext, sizeof(nifti1_extension));
+    for (int i=0; i<result->num_ext; i++)
+    {
+        result->ext_list[i].esize = image->ext_list[i].esize;
+        result->ext_list[i].ecode = image->ext_list[i].ecode;
+        result->ext_list[i].edata = (char *) calloc(result->ext_list[i].esize - 8, sizeof(char));
+        memcpy(result->ext_list[i].edata, image->ext_list[i].edata, result->ext_list[i].esize - 8);
+    }
     
     // Check the result looks plausible
     if (!nifti_nim_is_valid(result, 0))
         throw std::runtime_error("Conversion between image versions failed");
     
-    free(image);
     return result;
 }
 
 #elif RNIFTI_NIFTILIB_VERSION == 2
 
 // Byte-by-byte conversion of nifti1_image struct to a nifti2_image
-inline nifti2_image * convertImageV1to2 (void *image)
+inline nifti2_image * convertImageV1to2 (nifti1_image *image)
 {
-    if (sizeof(nifti2_image) != 1104 + 4 * sizeof(void*))
-        throw std::runtime_error("Stored image version cannot be changed");
+    if (image == NULL)
+        return NULL;
     
     nifti2_image *result = (nifti2_image *) calloc(1, sizeof(nifti2_image));
-    ImageBuffers buffers = { static_cast<char*>(image), reinterpret_cast<char*>(result) };
     
-    castElements<int,int64_t>(buffers, 16);
-    castElements<size_t,int64_t>(buffers, 1);
-    copyElements<int>(buffers, 2);
-    castElements<float,double>(buffers, 19);
-    copyElements<int>(buffers, 6);
-    castElements<int,int64_t>(buffers, 2);
-    castElements<float,double>(buffers, 73);
-    copyElements<int>(buffers, 4);
-    castElements<float,double>(buffers, 3);
-    copyElements<char>(buffers, 120);
-    copyElements<char*>(buffers, 2);
-    castElements<int,int64_t>(buffers, 1);
-    copyElements<int>(buffers, 2);
-    copyElements<void*>(buffers, 1);
-    copyElements<int>(buffers, 1);
-    copyElements<nifti1_extension*>(buffers, 1);
-    copyElements<analyze_75_orient_code>(buffers, 1);
+#ifndef NDEBUG
+    Rc_printf("Converting v1 image with pointer %p to v2 image with pointer %p\n", image, result);
+#endif
+    
+    std::transform(&image->ndim, &image->ndim + 16, &result->ndim, ElementConverter<int64_t>());
+    result->nvox = static_cast<int64_t>(image->nvox);
+    std::copy(&image->nbyper, &image->nbyper + 2, &result->nbyper);
+    std::transform(&image->dx, &image->dx + 19, &result->dx, ElementConverter<double>());
+    std::copy(&image->qform_code, &image->qform_code + 6, &result->qform_code);
+    std::transform(&image->slice_start, &image->slice_start + 2, &result->slice_start, ElementConverter<int64_t>());
+    std::transform(&image->slice_duration, &image->slice_duration + 73, &result->slice_duration, ElementConverter<double>());
+    std::copy(&image->xyz_units, &image->xyz_units + 4, &result->xyz_units);
+    std::transform(&image->intent_p1, &image->intent_p1 + 3, &result->intent_p1, ElementConverter<double>());
+    std::copy(static_cast<char*>(image->intent_name), static_cast<char*>(image->intent_name) + 120, static_cast<char*>(result->intent_name));
+    result->iname_offset = static_cast<int64_t>(image->iname_offset);
+    std::copy(&image->swapsize, &image->swapsize + 2, &result->swapsize);
+    result->analyze75_orient = image->analyze75_orient;
+    
+    result->fname = nifti_strdup(image->fname);
+    result->iname = nifti_strdup(image->iname);
+    if (image->data != NULL)
+    {
+        result->data = calloc(result->nvox, result->nbyper);
+        memcpy(result->data, image->data, result->nvox * result->nbyper);
+    }
+    
+    result->num_ext = image->num_ext;
+    result->ext_list = result->num_ext == 0 ? NULL : (nifti1_extension *) calloc(result->num_ext, sizeof(nifti1_extension));
+    for (int i=0; i<result->num_ext; i++)
+    {
+        result->ext_list[i].esize = image->ext_list[i].esize;
+        result->ext_list[i].ecode = image->ext_list[i].ecode;
+        result->ext_list[i].edata = (char *) calloc(result->ext_list[i].esize - 8, sizeof(char));
+        memcpy(result->ext_list[i].edata, image->ext_list[i].edata, result->ext_list[i].esize - 8);
+    }
     
     if (!nifti2_nim_is_valid(result, 0))
         throw std::runtime_error("Conversion between image versions failed");
     
-    free(image);
     return result;
 }
 
@@ -645,7 +664,7 @@ inline void NiftiImage::acquire (nifti_image * const image)
             (*this->refCount)++;
         
 #ifndef NDEBUG
-        Rc_printf("Acquiring pointer %p (reference count is %d)\n", this->image, *this->refCount);
+        Rc_printf("Acquiring pointer %p (v%d; reference count is %d)\n", this->image, RNIFTI_NIFTILIB_VERSION, *this->refCount);
 #endif
     }
 }
@@ -658,7 +677,7 @@ inline void NiftiImage::release ()
         {
             (*this->refCount)--;
 #ifndef NDEBUG
-            Rc_printf("Releasing pointer %p (reference count is %d)\n", this->image, *this->refCount);
+            Rc_printf("Releasing pointer %p (v%d; reference count is %d)\n", this->image, RNIFTI_NIFTILIB_VERSION, *this->refCount);
 #endif
             if (*this->refCount < 1)
             {
@@ -706,6 +725,7 @@ inline void NiftiImage::copy (const nifti_image *source)
 inline void NiftiImage::copy (const NiftiImage &source)
 {
     const nifti_image *sourceStruct = source;
+
     copy(sourceStruct);
 }
 
@@ -1031,16 +1051,17 @@ inline NiftiImage::NiftiImage (const SEXP object, const bool readData, const boo
         {
 #if RNIFTI_NIFTILIB_VERSION == 1
             if (imageObject.hasAttribute(".nifti_image_ver") && int(imageObject.attr(".nifti_image_ver")) == 2)
-                ptr->image = internal::convertImageV2to1(ptr->image);
+                acquire(internal::convertImageV2to1(reinterpret_cast<nifti2_image*>(ptr->image)));
 #elif RNIFTI_NIFTILIB_VERSION == 2
             if (!imageObject.hasAttribute(".nifti_image_ver") || int(imageObject.attr(".nifti_image_ver")) == 1)
-                ptr->image = internal::convertImageV1to2(ptr->image);
+                acquire(internal::convertImageV1to2(reinterpret_cast<nifti1_image*>(ptr->image)));
 #endif
-            
-            if (MAYBE_SHARED(object) && !readOnly)
+            // Copy if the object have multiple R-level references and we're not working read-only
+            else if (MAYBE_SHARED(object) && !readOnly)
                 copy(*ptr);
             else
                 acquire(*ptr);
+            
             resolved = true;
             
             if (imageObject.hasAttribute("dim"))
@@ -1093,7 +1114,7 @@ inline NiftiImage::NiftiImage (const SEXP object, const bool readData, const boo
     }
     
 #ifndef NDEBUG
-    Rc_printf("Creating NiftiImage with pointer %p (from SEXP)\n", this->image);
+    Rc_printf("Creating NiftiImage (v%d) with pointer %p (from SEXP)\n", RNIFTI_NIFTILIB_VERSION, this->image);
 #endif
 }
 
@@ -1104,7 +1125,7 @@ inline NiftiImage::NiftiImage (const std::vector<dim_t> &dim, const int datatype
 {
     initFromDims(dim, datatype);
 #ifndef NDEBUG
-    Rc_printf("Creating NiftiImage with pointer %p (from dims)\n", this->image);
+    Rc_printf("Creating NiftiImage (v%d) with pointer %p (from dims)\n", RNIFTI_NIFTILIB_VERSION, this->image);
 #endif
 }
 
@@ -1113,7 +1134,7 @@ inline NiftiImage::NiftiImage (const std::vector<dim_t> &dim, const std::string 
 {
     initFromDims(dim, internal::stringToDatatype(datatype));
 #ifndef NDEBUG
-    Rc_printf("Creating NiftiImage with pointer %p (from dims)\n", this->image);
+    Rc_printf("Creating NiftiImage (v%d) with pointer %p (from dims)\n", RNIFTI_NIFTILIB_VERSION, this->image);
 #endif
 }
 
@@ -1130,7 +1151,7 @@ inline NiftiImage::NiftiImage (const std::string &path, const bool readData)
         throw std::runtime_error("Failed to read image from path " + path);
     
 #ifndef NDEBUG
-    Rc_printf("Creating NiftiImage with pointer %p (from string)\n", this->image);
+    Rc_printf("Creating NiftiImage (v%d) with pointer %p (from string)\n", RNIFTI_NIFTILIB_VERSION, this->image);
 #endif
 }
 
@@ -1169,7 +1190,7 @@ inline NiftiImage::NiftiImage (const std::string &path, const std::vector<dim_t>
 #endif
     
 #ifndef NDEBUG
-    Rc_printf("Creating NiftiImage with pointer %p (from string and volume vector)\n", this->image);
+    Rc_printf("Creating NiftiImage (v%d) with pointer %p (from string and volume vector)\n", RNIFTI_NIFTILIB_VERSION, this->image);
 #endif
 }
 
