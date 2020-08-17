@@ -180,6 +180,8 @@ BEGIN_RCPP
     int filetype = NIFTI_FTYPE_NIFTI1_1;
     if (filetypeString == "analyze")
         filetype = NIFTI_FTYPE_ANALYZE;
+    else if (filetypeString == "nifti2")
+        filetype = NIFTI_FTYPE_NIFTI2_1;
     const std::pair<std::string,std::string> paths = image.toFile(as<std::string>(_file), as<std::string>(_datatype), filetype);
     return CharacterVector::create(Named("header")=paths.first, Named("image")=paths.second);
 END_RCPP
@@ -609,6 +611,14 @@ BEGIN_RCPP
 END_RCPP
 }
 
+RcppExport SEXP setDebugLevel (SEXP _level)
+{
+BEGIN_RCPP
+    nifti_set_debug_level(as<int>(_level));
+    return R_NilValue;
+END_RCPP
+}
+
 extern "C" {
 
 R_CallMethodDef callMethods[] = {
@@ -632,6 +642,7 @@ R_CallMethodDef callMethods[] = {
     { "indexList",      (DL_FUNC) &indexList,       2 },
     { "rescaleImage",   (DL_FUNC) &rescaleImage,    2 },
     { "pointerToArray", (DL_FUNC) &pointerToArray,  1 },
+    { "setDebugLevel",  (DL_FUNC) &setDebugLevel,   1 },
     { NULL, NULL, 0 }
 };
 
