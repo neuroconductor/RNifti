@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Write a NIfTI-1 format file — writeNifti • RNifti</title>
+<title>Write a NIfTI or ANALYZE format file — writeNifti • RNifti</title>
 
 
 <!-- jquery -->
@@ -39,9 +39,9 @@
 
 
 
-<meta property="og:title" content="Write a NIfTI-1 format file — writeNifti" />
-<meta property="og:description" content="This function writes an image to NIfTI-1 format, using the standard NIfTI-1
-C library." />
+<meta property="og:title" content="Write a NIfTI or ANALYZE format file — writeNifti" />
+<meta property="og:description" content="These functions write an image to NIfTI-1, NIfTI-2 or ANALYZE-7.5 format,
+using the standard NIfTI C library." />
 
 
 
@@ -109,17 +109,17 @@ C library." />
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Write a NIfTI-1 format file</h1>
+    <h1>Write a NIfTI or ANALYZE format file</h1>
     <small class="dont-index">Source: <a href='https://github.com/jonclayden/RNifti/blob/master/R/nifti.R'><code>R/nifti.R</code></a></small>
     <div class="hidden name"><code>writeNifti.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>This function writes an image to NIfTI-1 format, using the standard NIfTI-1
-C library.</p>
+    <p>These functions write an image to NIfTI-1, NIfTI-2 or ANALYZE-7.5 format,
+using the standard NIfTI C library.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>writeNifti</span>(<span class='kw'>image</span>, <span class='kw'>file</span>, template = <span class='kw'>NULL</span>, datatype = <span class='st'>"auto"</span>)
+    <pre class="usage"><span class='fu'>writeNifti</span>(<span class='kw'>image</span>, <span class='kw'>file</span>, template = <span class='kw'>NULL</span>, datatype = <span class='st'>"auto"</span>, version = <span class='fl'>1</span>)
 
 <span class='fu'>writeAnalyze</span>(<span class='kw'>image</span>, <span class='kw'>file</span>, template = <span class='kw'>NULL</span>, datatype = <span class='st'>"auto"</span>)</pre>
 
@@ -147,8 +147,24 @@ original datatype. Other possibilities are <code>"float"</code>, <code>"int16"</
 etc., which may be preferred to reduce file size. However, no checks are
 done to ensure that the coercion maintains precision.</p></td>
     </tr>
+    <tr>
+      <th>version</th>
+      <td><p>An integer (1 or 2) giving the NIfTI file format version to
+use. Version 2 is usually only needed for very large images or where
+metadata needs to be stored with high precision. The types available for
+storing the pixel data are the same in both cases.</p></td>
+    </tr>
     </table>
 
+    <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
+
+    <p>An invisible, named character vector giving the image and header
+  file names written to.</p>
+    <h2 class="hasAnchor" id="note"><a class="anchor" href="#note"></a>Note</h2>
+
+    <p>The ANALYZE-7.5 file format is a legacy format and use of it is not
+  recommended, except for compatibility. In particular, the format does
+  not reliably specify the spatial orientation of the image.</p>
     <h2 class="hasAnchor" id="references"><a class="anchor" href="#references"></a>References</h2>
 
     <p>The NIfTI-1 standard (<a href='http://www.nitrc.org/docman/view.php/26/64/nifti1.h'>http://www.nitrc.org/docman/view.php/26/64/nifti1.h</a>).</p>
