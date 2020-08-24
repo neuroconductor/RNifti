@@ -13,11 +13,12 @@
 <!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js" integrity="sha256-inc5kl9MA1hkeYUt+EC3BhlIgyp/2jDIyBLS6k3UxPI=" crossorigin="anonymous"></script><!-- headroom.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/headroom.min.js" integrity="sha256-AsUX4SJE1+yuDu5+mAVzJbuYNPHj/WroHuZ8Ir/CkE0=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/jQuery.headroom.min.js" integrity="sha256-ZX/yNShbjqsohH1k95liqY9Gd8uOiE1S4vZc+9KQ1K4=" crossorigin="anonymous"></script><!-- pkgdown --><link href="pkgdown.css" rel="stylesheet">
 <script src="pkgdown.js"></script><meta property="og:title" content="Fast R and C++ Access to NIfTI Images">
 <meta property="og:description" content="Provides very fast read and write access to images stored
-        in the NIfTI-1 and ANALYZE-7.5 formats, with seamless
-        synchronisation between compiled C and interpreted R code. Also
-        provides a simple image viewer, and a C/C++ API that can be
-        used by other packages. Not to be confused with RNiftyReg,
-        which performs image registration.">
+        in the NIfTI-1, NIfTI-2 and ANALYZE-7.5 formats, with seamless
+        synchronisation of in-memory image objects between compiled C
+        and interpreted R code. Also provides a simple image viewer,
+        and a C/C++ API that can be used by other packages. Not to be
+        confused with RNiftyReg, which performs image registration
+        and applies spatial transformations.">
 <!-- mathjax --><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha256-nvJJv9wWKEm88qvoQl9ekL2J+k/RWIsaSScxxlsrv8k=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/config/TeX-AMS-MML_HTMLorMML.js" integrity="sha256-84DKXVJXs0/F8OTMzX4UR909+jtl4G7SPypPavF+GfA=" crossorigin="anonymous"></script><!--[if lt IE 9]>
 <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
 <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
@@ -36,7 +37,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="index.html">RNifti</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.1.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.2.0</span>
       </span>
     </div>
 
@@ -76,7 +77,7 @@
 <div id="rnifti-fast-r-and-c-access-to-nifti-images" class="section level1">
 <div class="page-header"><h1 class="hasAnchor">
 <a href="#rnifti-fast-r-and-c-access-to-nifti-images" class="anchor"></a>RNifti: Fast R and C++ Access to NIfTI Images</h1></div>
-<p>The <a href="http://www.nitrc.org/docman/view.php/26/64/nifti1.h">NIfTI-1 format</a> is a popular file format for storing medical imaging data, widely used in medical research and related fields. Conceptually, a NIfTI-1 file incorporates multidimensional numeric data, like an R <code>array</code>, but with additional metadata describing the real-space resolution of the image, the physical orientation of the image, and how the image should be interpreted.</p>
+<p>The <a href="http://www.nitrc.org/docman/view.php/26/64/nifti1.h">NIfTI-1 format</a> is a popular file format for storing medical imaging data, widely used in medical research and related fields. Conceptually, a NIfTI-1 file incorporates multidimensional numeric data, like an R <code>array</code>, but with additional metadata describing the real-space resolution of the image, the physical orientation of the image, and how the image should be interpreted. The <a href="https://www.nitrc.org/docman/view.php/26/1302/nifti2_doc.html">NIfTI-2 format</a> was a later revision mostly to use wider data types for very large images.</p>
 <p>There are several packages available for reading and writing NIfTI-1 files in R, and these are summarised in the <a href="https://cran.r-project.org/view=MedicalImaging">Medical Imaging task view</a>. However, <code>RNifti</code> is distinguished by its</p>
 <ul>
 <li>
@@ -94,7 +95,7 @@
 <div id="usage" class="section level2">
 <h2 class="hasAnchor">
 <a href="#usage" class="anchor"></a>Usage</h2>
-<p>The primary role of <code>RNifti</code> is in reading and writing NIfTI-1 files, either <code>gzip</code>-compressed or uncompressed, and providing access to image data and metadata. An image may be read into R using the <code>readNifti</code> function.</p>
+<p>The primary role of <code>RNifti</code> is to read and write NIfTI-1 and (since package version 1.2.0) NIfTI-2 files, either <code>gzip</code>-compressed or uncompressed, and provide access to image data and metadata. An image may be read into R using the <code>readNifti</code> function.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit">
 <span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="kw"><a href="https://github.com/jonclayden/RNifti">RNifti</a></span>)
 <span class="kw">image</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/readNifti.html">readNifti</a></span>(<span class="fu"><a href="https://rdrr.io/r/base/system.file.html">system.file</a></span>(<span class="st">"extdata"</span>, <span class="st">"example.nii.gz"</span>, package=<span class="st">"RNifti"</span>))
@@ -171,7 +172,7 @@
 <div id="image-orientation" class="section level2">
 <h2 class="hasAnchor">
 <a href="#image-orientation" class="anchor"></a>Image orientation</h2>
-<p>The NIfTI-1 format has a mechanism for indicating the physical orientation and location of the image volume in real space. The reference orientation has the left–right direction aligned with the x-axis, the posterior–anterior (back–front) direction aligned with the y-axis, and the inferior–superior (bottom–top) direction aligned with the z-axis; but “xform” information stored with an image can describe a transformation from that coordinate system to the one used by that particular image, in the form of an affine matrix. To obtain the full xform matrix for an image, call the <code>xform</code> function:</p>
+<p>The NIfTI-1 and NIfTI-2 formats have a mechanism for indicating the physical orientation and location of the image volume in real space. The reference orientation has the left–right direction aligned with the x-axis, the posterior–anterior (back–front) direction aligned with the y-axis, and the inferior–superior (bottom–top) direction aligned with the z-axis; but “xform” information stored with an image can describe a transformation from that coordinate system to the one used by that particular image, in the form of an affine matrix. To obtain the full xform matrix for an image, call the <code>xform</code> function:</p>
 <div class="sourceCode" id="cb8"><pre class="downlit">
 <span class="fu"><a href="reference/xform.html">xform</a></span>(<span class="kw">image</span>)
 <span class="co">##      [,1] [,2] [,3]      [,4]</span>
@@ -208,7 +209,7 @@
 <span class="fu"><a href="reference/xform.html">orientation</a></span>(<span class="kw">image</span>) <span class="op">&lt;-</span> <span class="st">"RAS"</span>
 <span class="fu"><a href="reference/xform.html">xform</a></span>(<span class="kw">image</span>)
 <span class="co">##      [,1] [,2] [,3]       [,4]</span>
-<span class="co">## [1,]  2.5  0.0  0.0 -115.46609</span>
+<span class="co">## [1,]  2.5  0.0  0.0 -115.46610</span>
 <span class="co">## [2,]  0.0  2.5  0.0  -95.18523</span>
 <span class="co">## [3,]  0.0  0.0  2.5  -55.03814</span>
 <span class="co">## [4,]  0.0  0.0  0.0    1.00000</span>
@@ -225,7 +226,7 @@
 <div id="support-for-composite-types" class="section level2">
 <h2 class="hasAnchor">
 <a href="#support-for-composite-types" class="anchor"></a>Support for composite types</h2>
-<p>The NIfTI-1 standard supports composite types such as complex-valued and RGB images, and support for these was added in version 1.0.0 of this package. Complex data is exposed to R using the standard <code>complex</code> vector type:</p>
+<p>The NIfTI standard supports composite types such as complex-valued and RGB images, and support for these was added in version 1.0.0 of this package. Complex data is exposed to R using the standard <code>complex</code> vector type:</p>
 <div class="sourceCode" id="cb13"><pre class="downlit">
 <span class="kw">image</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/readNifti.html">readNifti</a></span>(<span class="fu"><a href="https://rdrr.io/r/base/system.file.html">system.file</a></span>(<span class="st">"extdata"</span>, <span class="st">"example.nii.gz"</span>, package=<span class="st">"RNifti"</span>))
 <span class="kw">complexImage</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/asNifti.html">asNifti</a></span>(<span class="kw">image</span> <span class="op">+</span> <span class="fl">0i</span>)
@@ -261,7 +262,7 @@
 <div id="performance" class="section level2">
 <h2 class="hasAnchor">
 <a href="#performance" class="anchor"></a>Performance</h2>
-<p>The <code>RNifti</code> package uses the robust NIfTI-1 reference implementation, which is written in C, to read and write NIfTI files. It also uses the standard NIfTI-1 data structure as its canonical representation of an image in memory. Together, these make the package extremely fast, as the following benchmark against packages <a href="https://cran.r-project.org/package=AnalyzeFMRI"><code>AnalyzeFMRI</code></a>, <a href="https://github.com/ANTsX/ANTsRCore"><code>ANTsRCore</code></a>, <a href="https://cran.r-project.org/package=neuroim"><code>neuroim</code></a>, <a href="https://cran.r-project.org/package=oro.nifti"><code>oro.nifti</code></a> and <a href="https://cran.r-project.org/package=tractor.base"><code>tractor.base</code></a> shows.</p>
+<p>The <code>RNifti</code> package uses the robust and widely used <a href="https://www.nitrc.org/projects/nifti/">NIfTI reference implementation</a>, which is written in C, to read and write NIfTI files. It also uses the standard NIfTI-2 data structure as its canonical representation of an image in memory. Together, these make the package extremely fast, as the following benchmark against packages <a href="https://cran.r-project.org/package=AnalyzeFMRI"><code>AnalyzeFMRI</code></a>, <a href="https://github.com/ANTsX/ANTsRCore"><code>ANTsRCore</code></a>, <a href="https://cran.r-project.org/package=neuroim"><code>neuroim</code></a>, <a href="https://cran.r-project.org/package=oro.nifti"><code>oro.nifti</code></a> and <a href="https://cran.r-project.org/package=tractor.base"><code>tractor.base</code></a> shows.</p>
 <div class="sourceCode" id="cb16"><pre class="downlit">
 <span class="fu"><a href="https://rdrr.io/r/utils/installed.packages.html">installed.packages</a></span>()[<span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="st">"AnalyzeFMRI"</span>,<span class="st">"ANTsRCore"</span>,<span class="st">"neuroim"</span>,<span class="st">"oro.nifti"</span>,<span class="st">"RNifti"</span>,
                        <span class="st">"tractor.base"</span>), <span class="st">"Version"</span>]
@@ -294,14 +295,14 @@
 <span class="co">##   0.3028081  0.2976415  0.3680695    0.768533   100</span>
 <span class="co">##  26.8987791 10.4609615 13.3785205  180.474982   100</span>
 </pre></div>
-<p>With a median runtime of less than 2 ms, <code>RNifti</code> is typically around ten times as fast as the alternatives to read this image into R. The exception is <code>ANTsRCore</code>, which uses a similar low-level pointer-based arrangement as <code>RNifti</code>, and is therefore comparable in speed. However, <code>ANTsR</code> has substantial dependencies, which may affect its suitability in some applications.</p>
+<p>With a median runtime of less than 2 ms, <code>RNifti</code> is typically around ten times as fast as the alternatives to read this image into R. The exception is <code>ANTsRCore</code>, which uses a similar low-level pointer-based arrangement as <code>RNifti</code>, and is therefore comparable in speed. However, <code>ANTsRCore</code> has substantial dependencies, which may affect its suitability in some applications.</p>
 <p>Moreover, when reading the file into an “internal” image, which does not copy the pixel values into R data structures until they are required, the median runtime drops by a further 80%, to just 300 µs. This saves time and memory, while still allowing data access through standard R indexing operations.</p>
 </div>
 <div id="implementation-details" class="section level2">
 <h2 class="hasAnchor">
 <a href="#implementation-details" class="anchor"></a>Implementation details</h2>
-<p>The package does not fully duplicate the NIfTI-1 structure’s contents in R-visible objects. Instead, it passes key metadata back to R, such as the image dimensions and pixel dimensions, and it also passes back the pixel values where they are needed. Finally, it creates an <a href="http://r-manuals.flakery.org/R-exts.html#External-pointers-and-weak-references">external pointer</a> to the native data structure, which is stored in an attribute. This pointer is dereferenced whenever the object is passed back to the C++ code, thereby avoiding unnecessary duplication and ensuring that all metadata remains intact. The full NIfTI-1 header can be obtained using the <code>niftiHeader</code> R function, if it is needed.</p>
-<p>This arrangement is efficient and generally works well, but many R operations strip attributes—in which case the external pointer will be removed. The internal structure will be built again when necessary, but using default metadata. In these cases, if it is important to keep the original metadata, the <code>asNifti</code> function should be called explicitly, with a template object. This reconstructs the NIfTI-1 data structure, using the template as a starting point.</p>
+<p>The package does not fully duplicate the NIfTI structure’s contents in R-visible objects. Instead, it passes key metadata back to R, such as the image dimensions and pixel dimensions, and it also passes back the pixel values where they are needed. Finally, it creates an <a href="http://r-manuals.flakery.org/R-exts.html#External-pointers-and-weak-references">external pointer</a> to the native data structure, which is stored in an attribute. This pointer is dereferenced whenever the object is passed back to the C++ code, thereby avoiding unnecessary duplication and ensuring that all metadata remains intact. The full NIfTI-1 header can be obtained using the <code>niftiHeader</code> R function, if it is needed.</p>
+<p>This arrangement is efficient and generally works well, but certain R operations strip attributes—in which case the external pointer will be removed. The internal structure will be built again when necessary, but using default metadata. In these cases, if it is important to keep the original metadata, the <code>asNifti</code> function should be called explicitly, with a template object. This reconstructs the NIfTI data structure, using the template as a starting point.</p>
 </div>
 <div id="api" class="section level2">
 <h2 class="hasAnchor">
@@ -338,17 +339,12 @@
 <a class="sourceLine" id="cb20-8" data-line-number="8">}</a></code></pre></div>
 <p>(<code>RNifti</code> will also have to be added to the <code>Imports</code> list in the package’s <code>DESCRIPTION</code> file, as well as <code>LinkingTo</code>.) The <code>RNiftiAPI.h</code> header should only be included once per package, since it contains function implementations. Multiple includes will lead to duplicate symbol warnings from your linker. Therefore, if multiple source files require access to the NIfTI-1 reference implementation, it is recommended that the API header be included alone in a separate “.c” or “.cpp” file, while others only include the main <code>RNifti.h</code>.</p>
 <p><code>RNifti</code> is not specifically designed to be thread-safe, and R itself is expressly single-threaded. However, some effort has been made to try to minimise problems associated with parallelisation, such as putting R API calls within a critical region if OpenMP is being used. If you are using the API in a package that does use OpenMP or another form of threads, it is wise to preregister the functions exported by <code>RNifti</code> before use, by calling <code>niftilib_register_all()</code>. In single-threaded contexts this is optional, and will be performed when required.</p>
+<p>Packages must choose which version of the NIfTI library to work with, since their definitions of the core <code>nifti_image</code> structure are incompatible. By default the NIfTI-1 version is used, but the NIfTI-2 version may be chosen instead by defining <code>RNIFTI_NIFTILIB_VERSION</code> to 2 before including <code>RNifti.h</code>. <a href="https://github.com/jonclayden/RNifti/blob/master/inst/include/RNifti.h">The header file</a> itself contains more detailed documentation. The <a href="https://github.com/jonclayden/RNifti/tree/master/clients"><code>clients</code> directory</a> has stub examples of packages using each version of the library.</p>
 </div>
 <div id="use-in-pure-c-projects" class="section level2">
 <h2 class="hasAnchor">
 <a href="#use-in-pure-c-projects" class="anchor"></a>Use in pure C++ projects</h2>
 <p>Thanks to contributions from <a href="https://github.com/soolijoo">Matt Hall</a>, it is possible (as of package version 0.7.0) to use the <code>NiftiImage</code> C++ class in standalone C++ projects. The <a href="https://github.com/jonclayden/RNifti/tree/master/standalone"><code>standalone</code> directory</a> provides a minimal example, and its contents can be copied to a new directory (including symlinked files) as a new project template.</p>
-</div>
-<div id="the-nifti-2-format" class="section level2">
-<h2 class="hasAnchor">
-<a href="#the-nifti-2-format" class="anchor"></a>The NIfTI-2 format</h2>
-<p>The <a href="https://nifti.nimh.nih.gov/nifti-2">NIfTI-2 format</a> is an evolution of the far more widely-used NIfTI-1. It primarily <a href="https://www.nitrc.org/forum/forum.php?thread_id=2148&amp;forum_id=1941">uses wider types for various fields</a>, to support large datasets and improve precision.</p>
-<p>Unfortunately, the NIfTI-1 version of the reference library is not forwards-compatible with NIfTI-2, and does not recognise NIfTI-2 files as valid, while the NIfTI-2 version changes the definition of the <code>nifti_image</code> data structure, and hence the return type of several core functions, rendering it potentially incompatible with software written for the original library. As a result, adding full NIfTI-2 support to <code>RNifti</code> without breaking existing code is not straightforward. Nevertheless, as of <code>RNifti</code> version 0.8.0, R function <code><a href="reference/niftiVersion.html">niftiVersion()</a></code> and C++ static method <code>NiftiImage::fileVersion()</code> offer a forwards-compatible way to determine the version of the format used by a particular file, so that calling functions can take action accordingly.</p>
 </div>
 </div>
 
