@@ -9,6 +9,7 @@ inline bool isNaN (const Type x) { return (x != x); }
 
 #ifdef USING_R
 // R offers the portable ISNAN macro for doubles, which is more robust
+// Note that this tests for NaN and NA values
 template <>
 inline bool isNaN<double> (const double x) { return bool(ISNAN(x)); }
 
@@ -18,6 +19,16 @@ inline bool isNaN<int> (const int x) { return (x == NA_INTEGER); }
 
 template <>
 inline bool isNaN<rgba32_t> (const rgba32_t x) { return (x.value.packed == NA_INTEGER); }
+
+// Specifically test for missingness - this is only relevant for R, and only when the distinction from NaN is important
+template <typename Type>
+inline bool isNA (const Type x) { return false; }
+
+template <>
+inline bool isNA<int> (const int x) { return (x == NA_INTEGER); }
+
+template <>
+inline bool isNA<double> (const double x) { return ISNA(x); }
 #endif
 
 template <typename Type>
@@ -465,6 +476,8 @@ inline NiftiImageData::Element & NiftiImageData::Element::operator= (const Sourc
         // or narrower type
         else if (parent.isInteger())
             parent.handler->setInt(ptr, NA_INTEGER);
+        else if (internal::isNA(value))
+            parent.handler->setDouble(ptr, NA_REAL);
 #endif
         else
             parent.handler->setDouble(ptr, std::numeric_limits<double>::quiet_NaN());
@@ -643,6 +656,8 @@ inline int NiftiImage::fileVersion (const std::string &path)
 #elif RNIFTI_NIFTILIB_VERSION == 2
     int version;
     void *header = nifti2_read_header(internal::stringToPath(path), &version, true);
+    if (header == NULL)
+        return -1;
     free(header);
     return version;
 #endif
@@ -937,8 +952,7 @@ inline void NiftiImage::initFromMriImage (const Rcpp::RObject &object, const boo
         this->image->qform_code = this->image->sform_code = 0;
     else
     {
-        Xform::Matrix xformMatrix;
-        std::copy(xform.begin(), xform.end(), xformMatrix.begin());
+        const Xform::Matrix xformMatrix(xform);
         this->qform() = xformMatrix;
         this->sform() = xformMatrix;
         this->image->qform_code = this->image->sform_code = 2;
@@ -1019,22 +1033,6 @@ inline void NiftiImage::initFromArray (const Rcpp::RObject &object, const bool c
         const std::vector<std::string> pixunitsVector = object.attr("pixunits");
         setPixunits(pixunitsVector);
     }
-}
-
-inline void NiftiImage::initFromDims (const std::vector<dim_t> &dim, const int datatype)
-{
-    const int nDims = std::min(7, int(dim.size()));
-    dim_t dims[8] = { nDims, 0, 0, 0, 0, 0, 0, 0 };
-    std::copy(dim.begin(), dim.begin() + nDims, &dims[1]);
-    
-#if RNIFTI_NIFTILIB_VERSION == 1
-    acquire(nifti_make_new_nim(dims, datatype, 1));
-#elif RNIFTI_NIFTILIB_VERSION == 2
-    acquire(nifti2_make_new_nim(dims, datatype, 1));
-#endif
-    
-    if (image == NULL)
-        throw std::runtime_error("Failed to create image from scratch");
 }
 
 inline NiftiImage::NiftiImage (const SEXP object, const bool readData, const bool readOnly)
@@ -1119,6 +1117,22 @@ inline NiftiImage::NiftiImage (const SEXP object, const bool readData, const boo
 }
 
 #endif // USING_R
+
+inline void NiftiImage::initFromDims (const std::vector<dim_t> &dim, const int datatype)
+{
+    const int nDims = std::min(7, int(dim.size()));
+    dim_t dims[8] = { nDims, 0, 0, 0, 0, 0, 0, 0 };
+    std::copy(dim.begin(), dim.begin() + nDims, &dims[1]);
+    
+#if RNIFTI_NIFTILIB_VERSION == 1
+    acquire(nifti_make_new_nim(dims, datatype, 1));
+#elif RNIFTI_NIFTILIB_VERSION == 2
+    acquire(nifti2_make_new_nim(dims, datatype, 1));
+#endif
+    
+    if (image == NULL)
+        throw std::runtime_error("Failed to create image from scratch");
+}
 
 inline NiftiImage::NiftiImage (const std::vector<dim_t> &dim, const int datatype)
     : image(NULL), refCount(NULL)
