@@ -82,7 +82,8 @@ before_install:
     fi fi
   - setup_python 3.6 false ;
   - install_python_requirements ;
-  - R CMD javareconf ;
+  - R CMD javareconf || true;
+  - sudo R CMD javareconf || true;
 after_success: dump_logs
 after_failure: dump_logs
 before_deploy:
@@ -111,4 +112,4 @@ after_deploy:
     && -z "${run_coverage}" ]]; then echo 'covr::coveralls(type = "all", quiet = FALSE)'
     > neuroc_covr.R ; travis_wait 100 Rscript neuroc_covr.R ; rm neuroc_covr.R ; fi
 
-# neuroc.deps commit id:c8c2628
+# neuroc.deps commit id:871f223
