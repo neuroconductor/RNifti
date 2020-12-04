@@ -27,5 +27,4 @@ BugReports: https://github.com/jonclayden/RNifti/issues
 Encoding: UTF-8
 RoxygenNote: 7.1.1
 Roxygen: list(old_usage=TRUE)
-Repository: Neuroconductor
-biocViews: 
+Remotes:
