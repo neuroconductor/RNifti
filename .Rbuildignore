@@ -15,3 +15,7 @@
 ^.*\.Rproj$
 ^\.Rproj\.user$
 ^\.nova$
+^DESCRIPTION\.bak$
+^autoci\.yml$
+^autoci_pkgdown\.yml$
+^tic\.R$
